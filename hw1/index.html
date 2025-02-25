@@ -28,20 +28,15 @@
 	<body>
 		<div class="container">
 		<h1>CS184/284A Spring 2025 Homework 1 Write-Up</h1>
-		<div style="text-align: center;">Names: </div>
+		<div style="text-align: center;">Names: Siva Tanikonda</div>
 
 		<br>
 
-		Link to webpage: (TODO) <a href="https://cs184.eecs.berkeley.edu/sp25">cs184.eecs.berkeley.edu/sp25</a>
+		Link to webpage: <a href="https://cal-cs184-student.github.io/hw-webpages-siva-wp/hw1/index.html">cal-cs184-student.github.io/hw-webpages-siva-wp/hw1/index.html</a>
 		
 		<br>
 
-		Link to GitHub repository: (TODO) <a href="https://cs184.eecs.berkeley.edu/sp25">cs184.eecs.berkeley.edu/sp25</a>
-
-		<figure>
-			<img src="lion.jpg" alt="Lion" style="width:50%"/>
-			<figcaption>You can add images with captions!</figcaption>
-		</figure>
+		Link to GitHub repository: <a href="https://github.com/cal-cs184-student/hw-webpages-siva-wp">github.com/cal-cs184-student/hw-webpages-siva-wp</a>
 
 		<!--
 		We've already added one heading per task, to make your write-up as navigable when grading. Please fit your write-up within these sections!
@@ -51,42 +46,128 @@
 		Give a high-level overview of what you implemented in this homework. Think about what you've built as a whole. Share your thoughts on what interesting things you've learned from completing the homework.
 
 		<h2>Task 1: Drawing Single-Color Triangles</h2>
-		Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum.
-
-		<p>Here is an example 2x2 gridlike structure using an HTML table. Each <b>tr</b> is a row and each <b>td</b> is a column in that row. You might find this useful for framing and showing your result images in an organized fashion.</p>
-		<div style="display: flex; flex-direction: column; align-items: center;">
-			<table style="width: 100%; text-align: center; border-collapse: collapse;">
-			  <tr>
-				<td style="text-align: center;">
-				  <img src="lion.jpg" width="400px"/>
-				  <figcaption>Caption goes here.</figcaption>
-				</td>
-				<td style="text-align: center;">
-				  <img src="lion.jpg" width="400px"/>
-				  <figcaption>Caption goes here.</figcaption>
-				</td>
-			  </tr>
-			  <tr>
-				<td style="text-align: center;">
-				  <img src="lion.jpg" width="400px"/>
-				  <figcaption>Caption goes here.</figcaption>
-				</td>
-				<td style="text-align: center;">
-				  <img src="lion.jpg" width="400px"/>
-				  <figcaption>Caption goes here.</figcaption>
-				</td>
-			  </tr>
-			</table>
-		</div>
+		<ol>
+			<li>The first step to rasterize a triangle was to find the coordinates and bounds of the bounding box. This is done by getting the minimum and maximum \(x\)-values and \(y\)-values of the triangle vertices. Then, I loop through every half-point within the bounding box. For each of these points \((i,j)\), I used the three-line test to check which side of each triangle line the point was on. For each triangle line from point \((x_0,y_0)\) to \((x_1,y_1)\), I calculated \(L=-(x-x_0)(y_1-y_0)+(y-y_0)(x_1-x_0)\). \(L=0\) means that the point is on the line, \(L<0\) means that the point is to the right of the line, and \(L>0\) means that the point is to the left of the line (we are assuming that this line is directed). As long as all points are not to the left, or all points are not to the right (i.e. the side is the same for every point with respect to all three sides of the triangle), then we know that our point is within the triangle. The disregard for whether all points are to the left or right allows us to deal with clockwise and counter-clockwise orderings and since points lying on a line will guaranteed be added (because our condition doesn't require the point to be stricly to the left or right), we handle points on edges properly. Then, for each sampled point in our triangle, we fill the pixel with our desired color.</li>
+			<li>Since I am looping through only points within the bounding box in one-pixel increments, I only look at at most \(\mathcal{O}(B)\) points (where \(B\) is the number of pixels in the bounding box). Then, we perform simple multiplications/additions/subtractions to check if each point is within the triangle (which takes \(\mathcal{O}(1)\) time).</li>
+			<li>Here is a screenshot of <code>basic/test4.svg</code> from my rendering:</li>
+			<figure>
+				<img src="test4.png" alt="Test 4" style="width:50%"/>
+				<figcaption>Even with edge detection, the thin corners of some triangles have breaks in them.</figcaption>
+			</figure>
+			<li><strong>Extra Credit</strong>: here are some things I ended-up changing/optimizing when trying to improve my naive triangle rasterization algorithm (the above image was rendered with the optimized version, and the previous conceptual questions were answered based on the naive algorithm before the extra credit optimizations):
+				<ul>
+					<li>Reduced memory access: previously, I created two new functions: <code>calculate_l</code> and <code>point_in_triangle</code> to check the side of a line a point was on and check if a point was in a triangle, respectively. I consolidated these two functions so all the functionality is in <code>point_in_triangle</code>. This cut my runtime in half (<code>~75 -> ~37</code> milliseconds).</li>
+					<li>Reducing search space: On each row of the triangle, I made it so that once we find a point that is no longer in the triangle, but the previous point was in the triangle, we know that all later points must not be in the triangle. This means I can just move on to the next row of the triangle without checking later pixels on the current row of the triangle. This cut my runtime by around a half again (<code>~37 -> ~20</code> milliseconds).</li>
+				</ul>
+				Before these optimizations, rendering <code>hardcore/01_degenerate_square1.svg</code> took <code>~75</code> milliseconds (according to <code>chrono::high_resolution_clock</code>). After the optimizations, the rendering took <code>~20</code> milliseconds. Here is the code before the optimization:
+				<pre><code>
+					float RasterizerImp::calculate_l(float x0, float y0, float x1, float y1, float x, float y) {
+						int value = -(x - x0) * (y1 - y0) + (y - y0) * (x1 - x0);
+						return value;
+					}
+					
+					bool RasterizerImp::point_in_triangle(float x0, float y0, float x1, float y1, float x2, float y2, float x, float y) {
+						float v1 = calculate_l(x0, y0, x1, y1, x, y);
+						float v2 = calculate_l(x1, y1, x2, y2, x, y);
+						float v3 = calculate_l(x2, y2, x0, y0, x, y);
+						return ((v1 <= 0 && v2 <= 0 && v3 <= 0) || (v1 >= 0 && v2 >= 0 && v3 >= 0));
+					}
+					
+					void RasterizerImp::rasterize_triangle(float x0, float y0, float x1, float y1, float x2, float y2, Color color) {
+						float min_x = floor(min(x0, min(x1, x2)));
+						float max_x = ceil(max(x0, max(x1, x2)));
+						float min_y = floor(min(y0, min(y1, y2)));
+						float max_y = ceil(max(y0, max(y1, y2)));
+						for (float i = min_x + 0.5; i <= max_x; i++) {
+						  	for (float j = min_y + 0.5; j <= max_y; j++) {
+								if (point_in_triangle(x0, y0, x1, y1, x2, y2, i, j)) {
+							  		rasterize_point(i, j, color);
+								}
+						  	}
+						}
+					}
+				</code></pre>
+				and after the optimization:
+				<pre><code>
+					bool RasterizerImp::point_in_triangle(float x0, float y0, float x1, float y1, float x2, float y2, float x, float y) {
+						float v1 = -(x - x0) * (y1 - y0) + (y - y0) * (x1 - x0);
+						float v2 = -(x - x1) * (y2 - y1) + (y - y1) * (x2 - x1);
+						float v3 = -(x - x2) * (y0 - y2) + (y - y2) * (x0 - x2);
+						return ((v1 <= 0 && v2 <= 0 && v3 <= 0) || (v1 >= 0 && v2 >= 0 && v3 >= 0));
+					}
+					
+					void RasterizerImp::rasterize_triangle(float x0, float y0, float x1, float y1, float x2, float y2, Color color) {
+						float max_x = ceil(max(x0, max(x1, x2)));
+						float min_y = floor(min(y0, min(y1, y2)));
+						float max_y = ceil(max(y0, max(y1, y2)));
+						for (float i = floor(min(x0, min(x1, x2))) + 0.5; i <= max_x; i++) {
+							bool in_triangle = false;
+							for (float j = min_y + 0.5; j <= max_y; j++) {
+								if (point_in_triangle(x0, y0, x1, y1, x2, y2, i, j)) {
+									rasterize_point(i, j, color);
+									in_triangle = true;
+								} else if (in_triangle) {
+									break;
+								}
+							}
+						}
+					}
+				</code></pre>
+			</li>
+		</ol>
 		
 		<h2>Task 2: Antialiasing by Supersampling</h2>
-		Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum.
+		<ol>
+			<li>To implement supersampling, I first expanded the sample buffer to be <code>sample_rate</code> times the size it originally was (i.e. each pixel has a <code>sqrt(sample_rate)*sqrt(sample_rate)</code> square of samples to determine its color). Then, for sampling each triangle, I up-scaled every coordinate of the triangle by <code>sqrt(sample_rate)</code> (this allows me to take <code>sample_rate</code> times as many samples of the triangle). Then, I updated the <code>fill_pixel()</code> function to index into the sample buffer based on these up-scaled coordinated passed in from the triangle rasterization function. To avoid super-sampling for lines and points, I added a new optional boolean parameter to the pixel rasterization and line rasterization functions that states if we are performing supersampling or not (the default value is <code>false</code> and when supersampling is disabled, the <code>fill_pixel()</code> function treats the input coordinates as being "un-scaled", and creates <code>sample_rate</code> duplicate samples to put for the single pixel, thus ensuring that averaging doesn't affect the final color of the pixel). I also updated the <code>set_sample_rate()</code> and <code>set_framebuffer_target()</code> functions to account for the <code>sample_rate</code> when creating the <code>sample_buffer</code>. Then, in <code>resolve_to_framebuffer()</code>, I made it so each pixel in <code>rgb_framebuffer_target</code> is the average of the colors of the <code>sample_rate</code> number of representative samples.</li>
+			<li>The screenshots of the supersampling with different sample rates are below. The reason for the improvement in the clarity of thin parts of the image (such as corners) is that even if one of our samples is slightly off the edge of the triangle, the pixel that the sample represents will still not be white, because some samples of the pixel are non-white/in the triangle. This allows for more clarity for fine details in an image without issues such as breaks in the corner of the triangle due to unlucky sample positions with a low sample rate.</li>
+			<div style="display: flex; flex-direction: column; align-items: center;">
+				<table style="width: 100%; text-align: center; border-collapse: collapse;">
+					<tr>
+						<td style="text-align: center;">
+							<img src="supersample1.png" width="400px"/>
+							<figcaption><code>sample_rate=1</code></figcaption>
+						</td>
+						<td style="text-align: center;">
+							<img src="supersample4.png" width="400px"/>
+							<figcaption><code>sample_rate=4</code></figcaption>
+						</td>
+					</tr>
+					<tr>
+						<td style="text-align: center;">
+							<img src="supersample9.png" width="400px"/>
+							<figcaption><code>sample_rate=9</code></figcaption>
+						</td>
+						<td style="text-align: center;">
+							<img src="supersample16.png" width="400px"/>
+							<figcaption><code>sample_rate=16</code></figcaption>
+						</td>
+					</tr>
+				</table>
+			</div>
+		</ol>
 
 		<h2>Task 3: Transforms</h2>
-		Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum.
+		<ol>
+			<li>A screenshot of the robot is below. I rotated and translated some of the robot's body parts in the SVG file to make it look like he is trying to balance on one leg (this was done by adding <code>g</code> tags in the SVG file).</li>
+			<figure>
+				<img src="robot.png" alt="Robot" style="width:50%"/>
+				<figcaption>The above image is rendered at <code>sample_rate=16</code> with default settings.</figcaption>
+			</figure>
+		</ol>
 
 		<h2>Task 4: Barycentric coordinates</h2>
-		Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum.
+		<ol>
+			<li>The way I implemented barycentric interpolation was taking the ratios of the \(L\)-value calculations of Task 1, and using these ratios to weight the effect of each triangle corner color on every sample point in the triangle. Since the \(L\)-values represent how to the "left" or to the "right" a point is to a side of the triangle, for each vertex \(v_i\) on the triangle and a sample point \(x\), we calculate \(\frac{L(v_j,v_k,x)}{L(v_j,v_k,v_i)}\), where \(v_j\) and \(v_k\) are the other vertices (in either clockwise or counter-clockwise order), and \(L(a,b,c)=-(c_x-a_x)(b_y-a_y) + (c_y-a_y)(b_x-a_x)\). Therefore, the higher this ratio, the more proportionally close that the sample point \(x\) is to \(v_i\). Therefore, \(\alpha\), \(\beta\), and \(\gamma\) represent the ratios for each of the three vertices of the triangle, and taking the weighted average of the colors based on these ratios for each sample point gives us an effect like the following:</li>
+			<figure>
+				<img src="diagram.png" alt="diagram" style="width:50%"/>
+				<figcaption>You can see how the closer you get to a specific corner, the more the sample points look like the closer corner's color (the above screenshot is under default settings with <code>sample_rate=16</code>).</figcaption>
+			</figure>
+			<li>Here is a screenshot of my color wheel:</li>
+			<figure>
+				<img src="wheel.png" alt="Wheel" style="width:50%"/>
+				<figcaption>The above image is rendered at <code>sample_rate=1</code> with default settings.</figcaption>
+			</figure>
+		</ol>
 
 		<h2>Task 5: "Pixel sampling" for texture mapping</h2>
 		Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum.
