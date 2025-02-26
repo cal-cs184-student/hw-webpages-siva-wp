@@ -213,7 +213,7 @@
 			<ul>
 				<li>Level-0 sampling: Nothing changes from Task 5 (I just run the respective pixel sampling function with <code>level=0</code>).</li>
 				<li>Nearest Neighbor: I took \(\lfloor L\rfloor\) (and clamped it into the range of the number of layers I have), and passed this as my level to the chosen pixel sampling function.</li>
-				<li>Linear Sampling: I performed pixel sampling on both the level \(l:=\lfloor L\rfloor\) and \(u:=\lfloor L\rfloor -1\). Then, I labeled the color samples \(C_l\) and \(C_u\). Then, the returned color is the lerped version of the color:
+				<li>Linear Sampling: I performed pixel sampling on both the level \(l:=\text{round}(L)-1\) and \(u:=\text{round}(L)\). Then, I labeled the color samples \(C_l\) and \(C_u\). Then, the returned color is the lerped version of the color:
 					\[C=C_l+\frac{L-l}{u-l+1}\left(C_u-C_l\right)\]
 				Note that the reason for adding \(1\) to the denominator is to account for the fact that the range is geometrically \(2\) units wide, not simply the difference of the starting and ending index.</li>
 			</ul>
