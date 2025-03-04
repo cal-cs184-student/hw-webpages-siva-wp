@@ -326,32 +326,33 @@
 				  </tr>
 				</table>
 			</div>
-			<li>Finally, I added some of my own edge splits to one part of the torus to see how the loop subdivision would respond. I managed to generate a torus with a distinctive dent in the area where I made manual edge splits, but the loop subdivision still maintains the rounding effect that negates the effect of sharp corners in our mesh. Here are screenshots of <code>dae/torus/input.dae</code> with manual edge splits added:</li>
-			<div style="display: flex; flex-direction: column; align-items: center;">
-				<table style="width: 100%; text-align: center; border-collapse: collapse;">
-				  <tr>
-					<td style="text-align: center;">
-					  <img src="Images/t6-10.png" width="500px"/>
-					  <figcaption>No Subdivisions</figcaption>
-					</td>
-					<td style="text-align: center;">
-					  <img src="Images/t6-11.png" width="500px"/>
-					  <figcaption>1 Subdivision</figcaption>
-					</td>
-				  </tr>
-				  <tr>
-					<td style="text-align: center;">
-						<img src="Images/t6-12.png" width="500px"/>
-						<figcaption>2 Subdivisions</figcaption>
-					</td>
-					<td style="text-align: center;">
-						<img src="Images/t6-13.png" width="500px"/>
-						<figcaption>3 Subdivisions</figcaption>
-					</td>
-				  </tr>
-				</table>
+			<li>Finally, I added some of my own edge splits to one part of the torus to see how the loop subdivision would respond. I managed to generate a torus with a distinctive dent in the area where I made manual edge splits, but the loop subdivision still maintains the rounding effect that negates the effect of sharp corners in our mesh. Here are screenshots of <code>dae/torus/input.dae</code> with manual edge splits added:
+				<div style="display: flex; flex-direction: column; align-items: center;">
+					<table style="width: 100%; text-align: center; border-collapse: collapse;">
+					  <tr>
+						<td style="text-align: center;">
+						  <img src="Images/t6-10.png" width="500px"/>
+						  <figcaption>No Subdivisions</figcaption>
+						</td>
+						<td style="text-align: center;">
+						  <img src="Images/t6-11.png" width="500px"/>
+						  <figcaption>1 Subdivision</figcaption>
+						</td>
+					  </tr>
+					  <tr>
+						<td style="text-align: center;">
+							<img src="Images/t6-12.png" width="500px"/>
+							<figcaption>2 Subdivisions</figcaption>
+						</td>
+						<td style="text-align: center;">
+							<img src="Images/t6-13.png" width="500px"/>
+							<figcaption>3 Subdivisions</figcaption>
+						</td>
+					  </tr>
+					</table>
+				</div>
 				Overall, although loop subdivision does a great job of smoothening sharp edges when they are unintended (ex. if we have a human sculpture that has a lot of unintended sharp edges), loop subdivision can remove/reduce the effect of sharp edges even when they are key to identifying the shape that we are trying to upsample.
-			</div>
+			</li>
 			<li>The loop subdivision performs quite poorly on <code>dae/cube.dae</code> without any manual edge flips/splits. In fact, the shape even becomes asymmetric after around 3 subdivisions! While the Icosahedron maintained symmetry while sacrificing sharp corners, the cube appears to lose both its sharpness and symmetry. Screenshots of the cube rendered by my code is below:
 				<table style="width: 100%; text-align: center; border-collapse: collapse;">
 					<tr>
@@ -375,7 +376,7 @@
 					  </td>
 					</tr>
 				  </table>
-			A key thing I noticed in the icosahedron that I did not notice in the cube was that the edges of the icosahedron were distributed symmetrically (in both their orientation and number) around the 3D model, whereas with the cube, it the diagonals were placed asymmetrically around the cube (the directions were not rotationally symmetric). My first instinct was to rotate one of the edges that were rotationally asymmetric, which yielded the following:
+			A key thing I noticed in the icosahedron that I did not notice in the cube was that the edges of the icosahedron were distributed symmetrically (in both their orientation and number) around the 3D model, whereas with the cube, the edges were placed asymmetrically around the cube (the directions were not rotationally symmetric). My first instinct was to rotate one of the edges that were rotationally asymmetric (the edge on the bottom of the cube), which yielded the following:
 			<table style="width: 100%; text-align: center; border-collapse: collapse;">
 				<tr>
 				  <td style="text-align: center;">
@@ -398,7 +399,32 @@
 				  </td>
 				</tr>
 			  </table>
+			  Flipping that edge improved the symmetry in the cube, but two opposite corners in the 4 subdivision cube were still much longer than the other corners. So, there is still more I could do to have complete symmetry among all cube corners. My second try was to split the diagonal edge on every side of the cube (so every side of the cube will look like an X before subdivisions are performed). This is how this experiment went:
+			  <table style="width: 100%; text-align: center; border-collapse: collapse;">
+				<tr>
+				  <td style="text-align: center;">
+					<img src="Images/t6-22.png" width="500px"/>
+					<figcaption>No Subdivisions</figcaption>
+				  </td>
+				  <td style="text-align: center;">
+					<img src="Images/t6-23.png" width="500px"/>
+					<figcaption>1 Subdivision</figcaption>
+				  </td>
+				</tr>
+				<tr>
+				  <td style="text-align: center;">
+					  <img src="Images/t6-24.png" width="500px"/>
+					  <figcaption>2 Subdivisions</figcaption>
+				  </td>
+				  <td style="text-align: center;">
+					  <img src="Images/t6-25.png" width="500px"/>
+					  <figcaption>4 Subdivisions</figcaption>
+				  </td>
+				</tr>
+			  </table>
+			  So, by ensuring that the edges are identical and symmetrical on each side of the cube, we have achieved symmetry in the cube (albeit we still have heavily rounded corners with our subdivision). The reason that our symmetry in edges results in a more symmetric output is likely that the edge splitting will have the same effect on every side of the cube (and hence the flips will be the same on both sides), and since each subdivision maintains the same symmetry, we will have a symmetric cube after each subdivision. Without this symmetry, the edge splits could be in different-shaped triangles, leading to a snowball effect where the cube gets more and more asymmetrical.
 			</li>
+			
 		</ol>
 
 		</div>
