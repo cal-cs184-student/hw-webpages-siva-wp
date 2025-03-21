@@ -28,12 +28,15 @@
 	<body>
 		<div class="container">
 		<h1>CS184/284A Spring 2025 Homework 3 Write-Up</h1>
-		<div style="text-align: center;">Names: </div>
+		<div style="text-align: center;">Names: Siva Tanikonda</div>
 
 		<br>
 
-		Link to webpage: (TODO) <a href="https://cs184.eecs.berkeley.edu/sp25">cs184.eecs.berkeley.edu/sp25</a>
-		Link to GitHub repository: (TODO) <a href="https://cs184.eecs.berkeley.edu/sp25">cs184.eecs.berkeley.edu/sp25</a>
+		Link to webpage: <a href="https://cal-cs184-student.github.io/hw-webpages-siva-wp/hw3/index.html">cal-cs184-student.github.io/hw-webpages-siva-wp/hw3/index.html</a>
+
+		<br>
+
+		Link to GitHub repository: <a href="https://github.com/cal-cs184-student/sp25-hw3-siva-lighting">github.com/cal-cs184-student/sp25-hw3-siva-lighting</a>
 		
 		<figure>
 			<img src="cornell.png" alt="Cornell Boxes with Bunnies" style="width:70%"/>
@@ -48,33 +51,55 @@
 		Give a high-level overview of what you implemented in this homework. Think about what you've built as a whole. Share your thoughts on what interesting things you've learned from completing the homework.
 
 		<h2>Part 1: Ray Generation and Scene Intersection</h2>
-		Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum.
-
-		<p>Here is an example 2x2 gridlike structure using an HTML table. Each <b>tr</b> is a row and each <b>td</b> is a column in that row. You might find this useful for framing and showing your result images in an organized fashion.</p>
-		<div style="display: flex; flex-direction: column; align-items: center;">
-			<table style="width: 100%; text-align: center; border-collapse: collapse;">
-			  <tr>
-				<td style="text-align: center;">
-				  <img src="cornell.png" width="400px"/>
-				  <figcaption>Caption goes here.</figcaption>
-				</td>
-				<td style="text-align: center;">
-				  <img src="cornell.png" width="400px"/>
-				  <figcaption>Caption goes here.</figcaption>
-				</td>
-			  </tr>
-			  <tr>
-				<td style="text-align: center;">
-				  <img src="cornell.png" width="400px"/>
-				  <figcaption>Caption goes here.</figcaption>
-				</td>
-				<td style="text-align: center;">
-				  <img src="cornell.png" width="400px"/>
-				  <figcaption>Caption goes here.</figcaption>
-				</td>
-			  </tr>
-			</table>
-		</div>
+		<ol>
+			<li>We know that to generate our rendering, we need to take at least one sample of each pixel in our current camera view. To do this, for each pixel \((x,y)\), we take the average of <code>ns_aa</code> independent radiance samples, where the \(i\)-th sample is at the position: \((x+X_i,y+Y_i)\), where \(X_i,Y_i\sim\text{Uniform}(0,1)\) (the Monte-Carlo estimate under a uniform distribution is just the average of the samples). For each of these positions, we utilize the <code>generate_ray</code> function to transform our sample position from our image space to our world space. This function does the following:
+			<ul>
+				<li>Find the direction from the camera position to the sample position using the formula:\[\vec{d}=\left(-\tan\left(\frac{\text{horizontal FOV}}{2}\right)+2x\times\tan\left(\frac{\text{horizontal FOV}}{2}\right),-\tan\left(\frac{\text{vertical FOV}}{2}\right)+2y\times\tan\left(\frac{\text{vertical FOV}}{2}\right),-1\right)\]</li>
+				<li>Rotate the direction by the camera-to-world rotation matrix as follows:\[\vec{d}:=M_{\text{C2W}}\vec{d}\] This will tell us the direction of the sample point from the camera position in world space.</li>
+				<li>Finally, normalize our direction vector: \(\vec{d}:=\frac{\vec{d}}{\|\vec{d}\|_2}\)</li>
+				<li>Create a ray with the origin at the camera position (<code>pos</code>) and the direction as \(\vec{d}\). Additionally, specify the minimum and maximum intersection times of any ray coming out of the camera as the near-clipping plane and far-clipping plane, respectively.</li>
+			</ul>
+			Now, ofor each generated ray, we can go through each object in our scene and check if our ray intersects it at a valid position. There are two primitives we dealt with in this part:
+			<ul>
+				<li>Triangles: we return the radiance if our ray intersects our triangle at a time \(t\in[\min_t,\max_t]\). If we find an intersection, update the \(\max_t\) to the time of the intersection (we only care about the first intersection). The algorithm is described in the next question.</li>
+				<li>Circles: we return the radiance if our ray intersects our circle at a time \(t\in[\min_t,\max_t]\). If we find an intersection, update the \(\max_t\) to the time of the intersection (we only care about the first intersection). To do this, we apply the quadratic formula to solve the following:\[\left\|\vec{r_o}+t\cdot\vec{r_d}-\vec{s_o}\right\|_2^2=t^2\left\|\vec{r_d}\right\|_2^2+2t\vec{r_d}^\top\left(\vec{r_o}-\vec{s_o}\right)+\left\|\vec{r_o}-\vec{s_o}\right\|_2^2=s_r^2\]where \(r\) is our ray and \(s\) is our sphere. We pick the smallest valid intersection time \(t\) if one exists, and declare that there was no intersection if no such \(t\) exists.</li>
+			</ul>
+			In the case of an intersection, we take the normal at the point of the first intersection, and use it for our normal shading.
+			</li>
+			<li>For triangle intersection, we first pick the triangle normal \(\vec{n_1}\) to be the normal to the plane of the triangle and \(\vec{p_1}\) as a vertex of the triangle. We have the following cases for our ray's direction \(\vec{d}\):
+				<ul>
+					<li>\(\vec{n_1}^\top\left(\vec{d}-\vec{p_1}\right)\): In this case, we have that the direction of the ray is parallel to the triangle. So, we don't have a triangle intersection.</li>
+					<li>Otherwise: we do the next steps.</li>
+				</ul>
+				For a non-parallel ray, we are going to find the barycentric coordinates of the intersection point of our triangle's plane. We can do this by solving the following matrix formula:\[\begin{bmatrix}-\vec{d}&\vec{p_2}-\vec{p_1}&\vec{p_3}-\vec{p_1}\end{bmatrix}\begin{bmatrix}t\\b_2\\b_3\end{bmatrix}=\vec{o}-\vec{p_1}\]where \(\vec{o}\) is the origin of our vector, \(b_1=1-b_2-b_3\), and \(b_1\vec{p_1}+b_2\vec{p_2}+b_3\vec{p_3}=\vec{o}+t\vec{d}\). We know that the triangle intersection occurs if \(b_1\), \(b_2\), and \(b_3\) are all in the range \([0,1]\) (because then our intersection point is in our triangle). We also check to make sure that our intersection time is within the range \([\min_t,\max_t]\) for our ray, and update \(\max_t\) if the intersection occurs. For our interpolated normal vector (for normal shading), we define the normal vector at our intersection as \(b_1\vec{n_1}+b_2\vec{n_2}+b_3\vec{n_3}\).
+			</li>
+			<li>Here are some images that have been shaded with normal shading using my program:
+				<div style="display: flex; flex-direction: column; align-items: center;">
+					<table style="width: 100%; text-align: center; border-collapse: collapse;">
+					  <tr>
+						<td style="text-align: center;">
+						  <img src="images/p1_1.png" width="400px"/>
+						  <figcaption><code>keenan/banana.dae</code></figcaption>
+						</td>
+						<td style="text-align: center;">
+						  <img src="images/p1_2.png" width="400px"/>
+						  <figcaption><code>sky/CBcoil.dae</code></figcaption>
+						</td>
+					  </tr>
+					  <tr>
+						<td style="text-align: center;">
+						  <img src="images/p1_3.png" width="400px"/>
+						  <figcaption><code>sky/CBgems.dae</code></figcaption>
+						</td>
+						<td style="text-align: center;">
+						  <img src="images/p1_4.png" width="400px"/>
+						  <figcaption><code>meshedit/teapot.dae</code></figcaption>
+						</td>
+					  </tr>
+					</table>
+				</div>
+			</li>
+		</ol>
 		
 		<h2>Part 2: Bounding Volume Hierarchy</h2>
 		Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum.
@@ -87,20 +112,6 @@
 
 		<h2>Part 5: Adaptive Sampling</h2>
 		Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum.
-
-		<h2>(Optional) Part 6: Extra Credit Opportunities</h2>
-		Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum.
-		
-		<h2>Additional Notes (please remove)</h2>
-		<ul>
-			<li>You can also add code if you'd like as so: <code>code code code</code></li>
-			<li>If you'd like to add math equations, 
-				<ul>
-					<li>You can write inline equations like so: \( a^2 + b^2 = c^2 \)</li>
-					<li>You can write display equations like so: \[ a^2 + b^2 = c^2 \]</li>
-				</ul>
-			</li>
-		</ul>
 		</div>
 	</body>
 </html>
