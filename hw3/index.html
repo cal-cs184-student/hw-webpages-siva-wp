@@ -101,17 +101,17 @@
 
 			<li>
 
-				At each node, I first created a list of centroids \(C\) of all the triangles from <code>start</code> to <code>end</code> for my node. I also calculate the bounding box that contains all of the primitives. Firstly, if <code>end-start+1</code> is at most the max leaf size, then I turn this node into a leaf node and just return the created node. If not, then for each dimension \(x\), \(y\), and \(z\), I do the following:
+				At each node, I first created a list of centroids \(C\) of all the triangles from <code>start</code> to <code>end</code> for my node. I also calculate the bounding box that contains all of the primitives. Firstly, if <code>end-start+1</code> is at most the max leaf size, then I turn this node into a leaf node and just return the created node. If not, then for the dimension \(d\) with the largest extent in our bounding box, I do the following:
 				<ul>
 
 					<li>I sort \(C\) by the dimension.</li>
 
 					<li>I found the median (\(m\)) of the sorted list, and then found how many elements are \(\lt m\) and how many elements are \(\geq m\)</li>
 
-					<li>The larger of these accounts is defined as the "split size" of my split along this dimension.</li>
+					<li>The larger of these counts is defined as the "split size" of my split along this dimension.</li>
 				
 				</ul>
-				I pick the dimension \(d\) with the smallest "split size" among all three dimensions as the dimension by which I will split my list of primitives (so, I am splitting in such a way that I try to ensure that the left and right children of any node in my bounding-volume hierarchy (BVH) have a similar number of primitives in them). Then, I sort my list of primitives from <code>start</code> to <code>end</code> in non-decreasing order w.r.t to the dimension \(d\). I then recursively generate my left and right children of my node (the left side contains all primitives whose \(d\)-th dimension is \(\lt m\), and the right side contains all primitives whose \(d\)-th dimension is \(\geq m\)). Then, I update the <code>start</code> and <code>end</code> iterators on my current node to correspond to the new starting and ending pointers of my sorted sublist of primitives. This entire process provides me with a BVH that has a small depth and contains only a few primitives at each leaf node. I also had to deal with the edge case where there is no way to split the primitives from <code>start</code> to <code>end</code> due to all the centroids being the same, in which case I just turn my node into a leaf node (regardless of if I have reached the max leaf size yet).
+				I sort my list of primitives from <code>start</code> to <code>end</code> in non-decreasing order w.r.t to the dimension \(d\). I then recursively generate my left and right children of my node (the left side contains all primitives whose \(d\)-th dimension is \(\lt m\), and the right side contains all primitives whose \(d\)-th dimension is \(\geq m\)). Then, I update the <code>start</code> and <code>end</code> iterators on my current node to correspond to the new starting and ending pointers of my sorted sublist of primitives. This entire process provides me with a BVH that has a small depth and contains only a few primitives at each leaf node. I also had to deal with the edge case where there is no way to split the primitives from <code>start</code> to <code>end</code> due to all the centroids being the same, in which case I just turn my node into a leaf node (regardless of if I have reached the max leaf size yet).
 
 			</li>
 
@@ -179,12 +179,120 @@
 				<li>RAM: 32 GB 6400 MHz GDDR5</li>
 			</ul>
 
-			I observed a massive improvement in the runtime of every single one of these geometries. It appears that the more complex the mesh structure of the model, the worse the non-BVH algorithm performs in rendering (as there are more triangles to test, and every ray will, in the worst-case, test every triangle). As for the BVH solution, it performs the worse (relative to its own performance on other geometries) if the mesh takes-up a lot of the camera view (as we will have to perform many inevitable triangle intersections to both see if we intersect a triangle with our ray, and find the earliest intersection points). But, since the BVH allows us to test collisions with bounding boxes before checking ray intersections with each primitive, we end-up getting a rather great speed-up (as we can often just avoid testing the vast majority of triangles for intersections). From a more theoretical perspective, if I want to intersect \(m\) rays with \(n\) triangles in my mesh, without a BVH, I will end-up taking \(\mathcal{O}(mn)\) time. This is because I will have to perform the triangle intersection test on every triangle in my scene for each ray. But, with my BVH (whose construction ensures an average height of around \(\mathcal{O}(\log n)\)), I will end-up only performing around \(\mathcal{O}(m\log n)\) intersection tests (assuming that my max leaf size is a rather small constant)! Additionally, a lot of these tests will end-up being cube intersection tests (where I use the slab technique specified in lecture), which are much more efficient/fast than the triangle intersection tests. Additionally, a potential reason that my non-BVH solution is not very fast is that I did not take many steps to optimize the triangle intersection algorithm (I utilized the built-in CGL matrix inversion function to implement Möller-Trumbore intersection).
+			I observed a massive improvement in the runtime of every single one of these geometries. It appears that the more complex the mesh structure of the model, the worse the non-BVH algorithm performs in rendering (as there are more triangles to test, and every ray will, in the worst-case, test every triangle). As for the BVH solution, it performs the worse (relative to its own performance on other geometries) if the mesh takes-up a lot of the camera view (as we will have to perform many inevitable triangle intersections to both see if we intersect a triangle with our ray, and find the earliest intersection points). But, since the BVH allows us to test collisions with bounding boxes before checking ray intersections with each primitive, we end-up getting a rather great speed-up (as we can often just avoid testing the vast majority of triangles for intersections). From a more theoretical perspective, if I want to intersect \(m\) rays with \(n\) triangles in my mesh, without a BVH, I will end-up taking \(\mathcal{O}(mn)\) time. This is because I will have to perform the triangle intersection test on every triangle in my scene for each ray. But, with my BVH (whose construction ensures an average height of around \(\mathcal{O}(\log n)\)), I will end-up only performing around \(\mathcal{O}(m\log n)\) intersection tests (assuming that my max leaf size is a rather small constant)! Additionally, a lot of these tests will end-up being cube intersection tests (where I use the slab technique specified in lecture), which are much more efficient/fast than the triangle intersection tests. Another nice property of my construction is that it picks the largest extent of the bounding-box to be the axis by which we split by the median at each node (this makes the intersection between our left and right-children bounding boxes of a node mostly small). Additionally, a potential reason that my non-BVH solution is not very fast is that I did not take many steps to optimize the triangle intersection algorithm (I utilized the built-in CGL matrix inversion function to implement Möller-Trumbore intersection).
 		
 		</ol>
 
 		<h2>Part 3: Direct Illumination</h2>
-		Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum.
+		<ol>
+			<li>
+
+				For the direct hemisphere lighting, I have the following method of sampling:
+				<ul>
+					<li>We take a number of samples equal to the number of lights times the number of samples per light (specified by the <code>-l</code> flag).</li>
+
+					<li>For each sample, we pick a random vector \(\vec{\omega_i}\) in a hemisphere around the intersection point of our ray with our primitive (we will call this point \(\vec{p}\)). We do this by picking a random point on the unit hemisphere, and then transform it to the space of our scene as follows: \(\vec{\omega_i}:=M_\text{O2W}\vec{\omega_i}\). Then, we use the function <code>intersect</code> with the a ray \(R_i\) centered at \(\vec{p}\) and in the direction of \(\vec{\omega_i}\), where the minimum \(t\)-value of the ray is at our \(\epsilon\) (to avoid intersection with the primitive that point \(\vec{p}\) is on). We assume that the radiance emitted by the surface that \(R_i\) intersects first is \(L_i\) and the sample represents the radiance coming-in from \(\vec{\omega_i}\) in the direction from \(\vec{p}\) to our camera \(\vec{\omega}_o\). Now, we get the following for the sample of our radiance:\[S_i=f(\vec{\omega_i}\rightarrow\vec{\omega_o}) L_i\cos\theta_i\]where \(\theta_i=\vec{\omega_i}^\top\vec{n}\) (this is because our vectors are unit vectors and \(\vec{n}\) is the normal to our intersection point on our primitive).</li>
+
+					<li>Finally, we sum-up our \(S_i\) values and divide by the number of samples to get our final estimated radiance coming into the camera.</li>
+
+				</ul>
+				For the direct importance lighting, we have the following method of sampling:
+				<ul>
+
+					<li>We will sample separately for each light \(l\), and we will take the same number of samples for each light (specified by the <code>-l</code> flag). If the light emitter is a point mass, then we just take \(1\) sample.</li>
+					
+					<li>For each sample for each light, we will use the <code>sample_L</code> method on the light to get a random vector \(\vec{\omega_i}\) that points from \(\vec{p}\) to our light, the PDF \(p(\vec{\omega_i})\) of the sampling distribution, and the distance \(d_i\) from the sampled point on the light to our point \(p\).</li>
+					
+					<li>We then generate a ray \(R_i\) that is centered at \(p\) and goes in the direction of \(\vec{\omega_i}\) (just like in hemisphere lighting). This ray will have a minimum time of \(\epsilon\) to intersect (for the same reason as hemisphere lighting), but we will set the maximum time to \(d_i-\epsilon\) (as this ray is only to test if the path from \(\vec{p}\) to the light is obstructed or not). But this time, we will use the function <code>has_intersection</code> in our bounding-box to check if there is any primitive on the path between \(\vec{p}\) and the light (because we don't care about the properties of the primitive that was intersected or what specific time \(t\) that our ray intersects the obstruction). Assuming that the radiance emitted by the light is \(L_i\), we have the following sampled radiance:\[S_i=\frac{f(\vec{\omega_i}\rightarrow\vec{\omega_o}) L_i\cos\theta_i}{p\left(\vec{\omega_i}\right)}\]where \(\theta_i=\vec{\omega_i}^\top\vec{n}\).</li>
+					
+					<li>Then for each light, we average all the samples.</li>
+					
+					<li>We add-up these averages among all lights to get our final radiance.</li>
+				
+				</ul>
+
+			</li>
+			<li>
+
+				Here are some images rendered with both lighting techniques (command: <code>./pathtracer -t 8 -s 64 -l 32 -m 6 [-H OR NOTHING] -f OUTPUT_FILE -r 480 480 ../dae/DAE_FILE</code>):
+
+				<div style="display: flex; flex-direction: column; align-items: center;">
+					<table style="width: 100%; text-align: center; border-collapse: collapse;">
+						<tr>
+							<td style="text-align: center;">Hemisphere Sampling</td>
+							<td style="text-align: center;">Importance Sampling</td>
+						</tr>
+						<tr>
+							<td style="text-align: center;">
+							<img src="images/p3_1.png" width="400px"/>
+							<figcaption><code>sky/CBempty.dae</code></figcaption>
+							</td>
+							<td style="text-align: center;">
+							<img src="images/p3_2.png" width="400px"/>
+							<figcaption><code>sky/bunny.dae</code></figcaption>
+							</td>
+						</tr>
+						<tr>
+							<td style="text-align: center;">
+							<img src="images/p3_3.png" width="400px"/>
+							<figcaption><code>sky/CBbunny.dae</code></figcaption>
+							</td>
+							<td style="text-align: center;">
+							<img src="images/p3_4.png" width="400px"/>
+							<figcaption><code>sky/bench.dae</code></figcaption>
+							</td>
+						</tr>
+						<tr>
+							<td style="text-align: center;">
+							<img src="images/p3_5.png" width="400px"/>
+							<figcaption><code>sky/CBspheres_lambertian.dae</code></figcaption>
+							</td>
+							<td style="text-align: center;">
+							<img src="images/p3_6.png" width="400px"/>
+							<figcaption><code>sky/wall-e.dae</code></figcaption>
+							</td>
+						</tr>
+					</table>
+				</div>
+
+			</li>
+
+			<li>
+
+				Here are some renderings of <code>sky/CBspheres_lambertian.dae</code> using importance sampling with one sample per pixel:
+				<table style="width: 100%; text-align: center; border-collapse: collapse;">
+					<tr>
+						<td style="text-align: center;">
+						<img src="images/p3_7.png" width="400px"/>
+						<figcaption><code>l=1</code></figcaption>
+						</td>
+						<td style="text-align: center;">
+						<img src="images/p3_8.png" width="400px"/>
+						<figcaption><code>l=4</code></figcaption>
+						</td>
+					</tr>
+					<tr>
+						<td style="text-align: center;">
+						<img src="images/p3_9.png" width="400px"/>
+						<figcaption><code>l=16</code></figcaption>
+						</td>
+						<td style="text-align: center;">
+						<img src="images/p3_10.png" width="400px"/>
+						<figcaption><code>l=64</code></figcaption>
+						</td>
+					</tr>
+				</table>
+				Our shadows are much more aliased/grainy on a lower number of samples per light, but we get much better clarity as we exponentially increase the number of samples. But, the highest improvments in aliasing for soft shadows appears at the initial increases in the number of samples per light, and we get somewhat of a "diminishing returns" as we increase <code>l</code> more and more. As we increase the number of samples per light, we also get a smoother transition from the dark parts of soft shadows to the ligher parts.
+
+			</li>
+
+			<li>
+
+				Firstly, uniform hemisphere sampling creates much grainier/aliased images than importance sampling. This is due to the fact that there is a lot of randomness in whether our randomly-generated ray hits a light source from the point that our camera ray intersects a primitive. A lot of this "chance" is avoided in importance sampling, as we can force every ray that we look at to be one that is already in the direction of a light, and the only "luck" is whether there is an obstruction between our light ray and some other primitive in the scene. Additionally, uniform hemisphere sampling generally has a darker appearance. This is due, once again, to the lower probability of picking a random ray and hitting a light with the ray (this is more pronounced in models with very few light sources). But, again, the importance sampling avoids the luck of picking a ray that is directed towards a light source and not just some other surface. Finally, in the way that I implemented importance sampling, importance sampling actually runs much faster than the standard hemisphere sampling. This is because in hemisphere shading, we have to both detect an intersection and record the primitive of the first intersection in our BVH (this is so we know what object our bouncing ray hit). This requires us to traverse a large amount of the BVH using the <code>intersect</code> method, and we don't have many opportunities to short-circuit our traversal. But, in importance sampling, we only need the BVH to see if some object obstructs the path from our bouncing point to the light. So, we can just use the standard <code>has_intersection</code> method, which will just short-circuit when a collision is found (as we don't care about getting the first collision, just a collision within our specified \(t\)-range for our ray).
+
+			</li>
+
+		</ol>
 
 		<h2>Part 4: Global Illumination</h2>
 		Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum.
