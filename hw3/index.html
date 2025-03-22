@@ -52,26 +52,21 @@
 
 		<h2>Part 1: Ray Generation and Scene Intersection</h2>
 		<ol>
-			<li>We know that to generate our rendering, we need to take at least one sample of each pixel in our current camera view. To do this, for each pixel \((x,y)\), we take the average of <code>ns_aa</code> independent radiance samples, where the \(i\)-th sample is at the position: \((x+X_i,y+Y_i)\), where \(X_i,Y_i\sim\text{Uniform}(0,1)\) (the Monte-Carlo estimate under a uniform distribution is just the average of the samples). For each of these positions, we utilize the <code>generate_ray</code> function to transform our sample position from our image space to our world space. This function does the following:
+			<li>We know that to generate our rendering, we need to take samples of each pixel in our current camera view. To do this, for each pixel \((x,y)\), we take the average of <code>ns_aa</code> independent radiance samples, where the \(i\)-th sample is at the position: \((x+X_i,y+Y_i)\), where \(X_i,Y_i\sim\text{Uniform}(0,1)\) (the Monte-Carlo estimate under a uniform distribution is just the average of the samples). Once we get the average, we assign the pixel on the screen to the average radiance. For each sample position, we utilize the <code>generate_ray</code> function to transform our sample position from our image space to our world space. This function does the following:
 			<ul>
 				<li>Find the direction from the camera position to the sample position using the formula:\[\vec{d}=\left(-\tan\left(\frac{\text{horizontal FOV}}{2}\right)+2x\times\tan\left(\frac{\text{horizontal FOV}}{2}\right),-\tan\left(\frac{\text{vertical FOV}}{2}\right)+2y\times\tan\left(\frac{\text{vertical FOV}}{2}\right),-1\right)\]</li>
 				<li>Rotate the direction by the camera-to-world rotation matrix as follows:\[\vec{d}:=M_{\text{C2W}}\vec{d}\] This will tell us the direction of the sample point from the camera position in world space.</li>
 				<li>Finally, normalize our direction vector: \(\vec{d}:=\frac{\vec{d}}{\|\vec{d}\|_2}\)</li>
 				<li>Create a ray with the origin at the camera position (<code>pos</code>) and the direction as \(\vec{d}\). Additionally, specify the minimum and maximum intersection times of any ray coming out of the camera as the near-clipping plane and far-clipping plane, respectively.</li>
 			</ul>
-			Now, ofor each generated ray, we can go through each object in our scene and check if our ray intersects it at a valid position. There are two primitives we dealt with in this part:
+			Now, for each generated ray, <code>est_radiance_global_illumination</code> goes through each primitive in our scene and checks if our ray intersects it at a valid position. There are two primitives we dealt with in this part:
 			<ul>
-				<li>Triangles: we return the radiance if our ray intersects our triangle at a time \(t\in[\min_t,\max_t]\). If we find an intersection, update the \(\max_t\) to the time of the intersection (we only care about the first intersection). The algorithm is described in the next question.</li>
-				<li>Circles: we return the radiance if our ray intersects our circle at a time \(t\in[\min_t,\max_t]\). If we find an intersection, update the \(\max_t\) to the time of the intersection (we only care about the first intersection). To do this, we apply the quadratic formula to solve the following:\[\left\|\vec{r_o}+t\cdot\vec{r_d}-\vec{s_o}\right\|_2^2=t^2\left\|\vec{r_d}\right\|_2^2+2t\vec{r_d}^\top\left(\vec{r_o}-\vec{s_o}\right)+\left\|\vec{r_o}-\vec{s_o}\right\|_2^2=s_r^2\]where \(r\) is our ray and \(s\) is our sphere. We pick the smallest valid intersection time \(t\) if one exists, and declare that there was no intersection if no such \(t\) exists.</li>
+				<li>Triangles: we declare an intersection if our ray intersects our triangle at a time \(t\in[\min_t,\max_t]\) (where \(\min_t\) and \(\max_t\) are values in our ray object). If we find an intersection, update the \(\max_t\) to the time of the intersection (we only care about the first intersection). The algorithm is described in the next question.</li>
+				<li>Circles: we declare an intersection if our ray intersects our circle at a time \(t\in[\min_t,\max_t]\). If we find an intersection, update the \(\max_t\) to the time of the intersection. To find if an intersection happened, we apply the quadratic formula to solve the following:\[\left\|\vec{r_o}+t\cdot\vec{r_d}-\vec{s_o}\right\|_2^2=t^2\left\|\vec{r_d}\right\|_2^2+2t\vec{r_d}^\top\left(\vec{r_o}-\vec{s_o}\right)+\left\|\vec{r_o}-\vec{s_o}\right\|_2^2=s_r^2\]where \(r\) is our ray and \(s\) is our sphere. We pick the smallest valid intersection time \(t^\star\) if one exists, and declare that there was no intersection if no such \(t^\star\) exists. Our normal vector will be the normalization of the following vector: \[\vec{r_o}+t^\star\vec{r_d}-\vec{s_o}\]</li>
 			</ul>
-			In the case of an intersection, we take the normal at the point of the first intersection, and use it for our normal shading.
+			In the case of an intersection, we record the normal at the point of the first intersection. <code>est_radiance_global_illumination</code> will use this normal to calculate our normal shading radiance, which we define as the radiance of our sample.
 			</li>
-			<li>For triangle intersection, we first pick the triangle normal \(\vec{n_1}\) to be the normal to the plane of the triangle and \(\vec{p_1}\) as a vertex of the triangle. We have the following cases for our ray's direction \(\vec{d}\):
-				<ul>
-					<li>\(\vec{n_1}^\top\left(\vec{d}-\vec{p_1}\right)\): In this case, we have that the direction of the ray is parallel to the triangle. So, we don't have a triangle intersection.</li>
-					<li>Otherwise: we do the next steps.</li>
-				</ul>
-				For a non-parallel ray, we are going to find the barycentric coordinates of the intersection point of our triangle's plane. We can do this by solving the following matrix formula:\[\begin{bmatrix}-\vec{d}&\vec{p_2}-\vec{p_1}&\vec{p_3}-\vec{p_1}\end{bmatrix}\begin{bmatrix}t\\b_2\\b_3\end{bmatrix}=\vec{o}-\vec{p_1}\]where \(\vec{o}\) is the origin of our vector, \(b_1=1-b_2-b_3\), and \(b_1\vec{p_1}+b_2\vec{p_2}+b_3\vec{p_3}=\vec{o}+t\vec{d}\). We know that the triangle intersection occurs if \(b_1\), \(b_2\), and \(b_3\) are all in the range \([0,1]\) (because then our intersection point is in our triangle). We also check to make sure that our intersection time is within the range \([\min_t,\max_t]\) for our ray, and update \(\max_t\) if the intersection occurs. For our interpolated normal vector (for normal shading), we define the normal vector at our intersection as \(b_1\vec{n_1}+b_2\vec{n_2}+b_3\vec{n_3}\).
+			<li>For triangle intersection, we first pick the triangle normal \(\vec{n_i}\) to be the \(i\)-th normal to the plane of the triangle and \(\vec{p_i}\) as the \(i\)-th vertex of the triangle. First, we check if our ray is parallel to the triangle, in which case we don't have an intersection. Our ray is parallel iff \(\vec{n_1}^\top\vec{r_d}=0\) (i.e. the ray direction is orthogonal to the normal of the triangle plane). For a non-parallel ray, we are going to find the barycentric coordinates of the intersection point of our ray with the triangle's plane. We can do this by solving the following matrix formula:\[\begin{bmatrix}-\vec{r_d}&\vec{p_2}-\vec{p_1}&\vec{p_3}-\vec{p_1}\end{bmatrix}\begin{bmatrix}t\\b_2\\b_3\end{bmatrix}=\vec{r_o}-\vec{p_1}\]where \(b_1=1-b_2-b_3\) and \(b_1\vec{p_1}+b_2\vec{p_2}+b_3\vec{p_3}=\vec{r_o}+t\vec{r_d}\). We know that the triangle intersection occurs if \(b_1\), \(b_2\), and \(b_3\) are all in the range \([0,1]\) (because then our intersection point is in our triangle). We also check to make sure that our intersection time is within the range \([\min_t,\max_t]\) for our ray, and update \(\max_t\) if the intersection occurs. For our interpolated normal vector (for normal shading), we define the normal vector at our intersection as \(b_1\vec{n_1}+b_2\vec{n_2}+b_3\vec{n_3}\).
 			</li>
 			<li>Here are some images that have been shaded with normal shading using my program:
 				<div style="display: flex; flex-direction: column; align-items: center;">
@@ -102,7 +97,91 @@
 		</ol>
 		
 		<h2>Part 2: Bounding Volume Hierarchy</h2>
-		Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum.
+		<ol>
+
+			<li>
+
+				At each node, I first created a list of centroids \(C\) of all the triangles from <code>start</code> to <code>end</code> for my node. I also calculate the bounding box that contains all of the primitives. Firstly, if <code>end-start+1</code> is at most the max leaf size, then I turn this node into a leaf node and just return the created node. If not, then for each dimension \(x\), \(y\), and \(z\), I do the following:
+				<ul>
+
+					<li>I sort \(C\) by the dimension.</li>
+
+					<li>I found the median (\(m\)) of the sorted list, and then found how many elements are \(\lt m\) and how many elements are \(\geq m\)</li>
+
+					<li>The larger of these accounts is defined as the "split size" of my split along this dimension.</li>
+				
+				</ul>
+				I pick the dimension \(d\) with the smallest "split size" among all three dimensions as the dimension by which I will split my list of primitives (so, I am splitting in such a way that I try to ensure that the left and right children of any node in my bounding-volume hierarchy (BVH) have a similar number of primitives in them). Then, I sort my list of primitives from <code>start</code> to <code>end</code> in non-decreasing order w.r.t to the dimension \(d\). I then recursively generate my left and right children of my node (the left side contains all primitives whose \(d\)-th dimension is \(\lt m\), and the right side contains all primitives whose \(d\)-th dimension is \(\geq m\)). Then, I update the <code>start</code> and <code>end</code> iterators on my current node to correspond to the new starting and ending pointers of my sorted sublist of primitives. This entire process provides me with a BVH that has a small depth and contains only a few primitives at each leaf node. I also had to deal with the edge case where there is no way to split the primitives from <code>start</code> to <code>end</code> due to all the centroids being the same, in which case I just turn my node into a leaf node (regardless of if I have reached the max leaf size yet).
+
+			</li>
+
+			<li>Here are some complex images generated with my BVH:
+
+				<div style="display: flex; flex-direction: column; align-items: center;">
+					<table style="width: 100%; text-align: center; border-collapse: collapse;">
+					  <tr>
+						<td style="text-align: center;">
+						  <img src="images/p2_1.png" width="400px"/>
+						  <figcaption><code>keenan/building.dae</code></figcaption>
+						</td>
+						<td style="text-align: center;">
+						  <img src="images/p2_2.png" width="400px"/>
+						  <figcaption><code>sky/CBdragon.dae</code></figcaption>
+						</td>
+					  </tr>
+					  <tr>
+						<td style="text-align: center;">
+						  <img src="images/p2_3.png" width="400px"/>
+						  <figcaption><code>sky/CBbunny.dae</code></figcaption>
+						</td>
+						<td style="text-align: center;">
+						  <img src="images/p2_4.png" width="400px"/>
+						  <figcaption><code>sky/wall-e.dae</code></figcaption>
+						</td>
+					  </tr>
+					</table>
+				</div>
+
+			</li>
+
+			<li>Below is a table of rendering times of moderately complex geometries with and without using my BVH.
+				<table style="width: 100%; text-align: center; border-collapse: collapse; border: 1px solid black;">
+					<tr style="border: 1px solid black;">
+						<td style="border: 1px solid black;">DAE_FILE</td>
+						<td style="border: 1px solid black;">No BVH (seconds)</td>
+						<td style="border: 1px solid black;">With BVH (seconds)</td>
+					</tr>
+					<tr style="border: 1px solid black;">
+						<td style="border: 1px solid black;"><code>sky/CBcoil.dae</code></td>
+						<td style="border: 1px solid black;"><code>~75.391</code></td>
+						<td style="border: 1px solid black;"><code>~0.033</code></td>
+					</tr>
+					<tr style="border: 1px solid black;">
+						<td style="border: 1px solid black;"><code>meshedit/teapot.dae</code></td>
+						<td style="border: 1px solid black;"><code>~23.401</code></td>
+						<td style="border: 1px solid black;"><code>~0.079</code></td>
+					</tr>
+					<tr style="border: 1px solid black;">
+						<td style="border: 1px solid black;"><code>keenan/banana.dae</code></td>
+						<td style="border: 1px solid black;"><code>~23.492</code></td>
+						<td style="border: 1px solid black;"><code>~0.028</code></td>
+					</tr>
+					<tr style="border: 1px solid black;">
+						<td style="border: 1px solid black;"><code>meshedit/cow.dae</code></td>
+						<td style="border: 1px solid black;"><code>~55.787</code></td>
+						<td style="border: 1px solid black;"><code>~0.126</code></td>
+					</tr>
+				</table>
+			</li>
+			I rendered using the command <code>./pathtracer -r 800 600 -t 8 -f OUTPUT_FILE ../dae/DAE_FILE</code> on a machine with the following (relevant) specs:
+			<ul>
+				<li>CPU: Ryzen 7 7800x3D (8-core, 16-thread)</li>
+				<li>RAM: 32 GB 6400 MHz GDDR5</li>
+			</ul>
+
+			I observed a massive improvement in the runtime of every single one of these geometries. It appears that the more complex the mesh structure of the model, the worse the non-BVH algorithm performs in rendering (as there are more triangles to test, and every ray will, in the worst-case, test every triangle). As for the BVH solution, it performs the worse (relative to its own performance on other geometries) if the mesh takes-up a lot of the camera view (as we will have to perform many inevitable triangle intersections to both see if we intersect a triangle with our ray, and find the earliest intersection points). But, since the BVH allows us to test collisions with bounding boxes before checking ray intersections with each primitive, we end-up getting a rather great speed-up (as we can often just avoid testing the vast majority of triangles for intersections). From a more theoretical perspective, if I want to intersect \(m\) rays with \(n\) triangles in my mesh, without a BVH, I will end-up taking \(\mathcal{O}(mn)\) time. This is because I will have to perform the triangle intersection test on every triangle in my scene for each ray. But, with my BVH (whose construction ensures an average height of around \(\mathcal{O}(\log n)\)), I will end-up only performing around \(\mathcal{O}(m\log n)\) intersection tests (assuming that my max leaf size is a rather small constant)! Additionally, a lot of these tests will end-up being cube intersection tests (where I use the slab technique specified in lecture), which are much more efficient/fast than the triangle intersection tests. Additionally, a potential reason that my non-BVH solution is not very fast is that I did not take many steps to optimize the triangle intersection algorithm (I utilized the built-in CGL matrix inversion function to implement Möller-Trumbore intersection).
+		
+		</ol>
 
 		<h2>Part 3: Direct Illumination</h2>
 		Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum.
