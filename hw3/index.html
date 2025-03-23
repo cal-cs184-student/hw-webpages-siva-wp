@@ -37,11 +37,6 @@
 		<br>
 
 		Link to GitHub repository: <a href="https://github.com/cal-cs184-student/sp25-hw3-siva-lighting">github.com/cal-cs184-student/sp25-hw3-siva-lighting</a>
-		
-		<figure>
-			<img src="cornell.png" alt="Cornell Boxes with Bunnies" style="width:70%"/>
-			<figcaption>You can add images with captions!</figcaption>
-		</figure>
 
 		<!--
 		We've already added one heading per part, to make your write-up as navigable when grading. Please fit your write-up within these sections!
@@ -54,7 +49,7 @@
 		<ol>
 			<li>We know that to generate our rendering, we need to take samples of each pixel in our current camera view. To do this, for each pixel \((x,y)\), we take the average of <code>ns_aa</code> independent radiance samples, where the \(i\)-th sample is at the position: \((x+X_i,y+Y_i)\), where \(X_i,Y_i\sim\text{Uniform}(0,1)\) (the Monte-Carlo estimate under a uniform distribution is just the average of the samples). Once we get the average, we assign the pixel on the screen to the average radiance. For each sample position, we utilize the <code>generate_ray</code> function to transform our sample position from our image space to our world space. This function does the following:
 			<ul>
-				<li>Find the direction from the camera position to the sample position using the formula:\[\vec{d}=\left(-\tan\left(\frac{\text{horizontal FOV}}{2}\right)+2x\times\tan\left(\frac{\text{horizontal FOV}}{2}\right),-\tan\left(\frac{\text{vertical FOV}}{2}\right)+2y\times\tan\left(\frac{\text{vertical FOV}}{2}\right),-1\right)\]</li>
+				<li>Find the direction from the camera position to the sample position using the formula:\[\vec{d}=\left(-\tan\left(\frac{\text{hFOV}}{2}\right)+2x\times\tan\left(\frac{\text{hFOV}}{2}\right),-\tan\left(\frac{\text{vFOV}}{2}\right)+2y\times\tan\left(\frac{\text{vFOV}}{2}\right),-1\right)\]</li>
 				<li>Rotate the direction by the camera-to-world rotation matrix as follows:\[\vec{d}:=M_{\text{C2W}}\vec{d}\] This will tell us the direction of the sample point from the camera position in world space.</li>
 				<li>Finally, normalize our direction vector: \(\vec{d}:=\frac{\vec{d}}{\|\vec{d}\|_2}\)</li>
 				<li>Create a ray with the origin at the camera position (<code>pos</code>) and the direction as \(\vec{d}\). Additionally, specify the minimum and maximum intersection times of any ray coming out of the camera as the near-clipping plane and far-clipping plane, respectively.</li>
@@ -101,7 +96,7 @@
 
 			<li>
 
-				At each node, I first created a list of centroids \(C\) of all the triangles from <code>start</code> to <code>end</code> for my node. I also calculate the bounding box that contains all of the primitives. Firstly, if <code>end-start+1</code> is at most the max leaf size, then I turn this node into a leaf node and just return the created node. If not, then for the dimension \(d\) with the largest extent in our bounding box, I do the following:
+				At each node, I first created a list of centroids \(C\) of all the primitives from <code>start</code> to <code>end</code> for my node. I also calculate the bounding box that contains all of the primitives. Firstly, if <code>end-start+1</code> is at most the max leaf size, then I turn this node into a leaf node and just return the created node. If not, then for the dimension \(d\) with the largest extent in our bounding box, I do the following:
 				<ul>
 
 					<li>I sort \(C\) by the dimension.</li>
@@ -191,9 +186,9 @@
 				<ul>
 					<li>We take a number of samples equal to the number of lights times the number of samples per light (specified by the <code>-l</code> flag).</li>
 
-					<li>For each sample, we pick a random vector \(\vec{\omega_i}\) in a hemisphere around the intersection point of our ray with our primitive (we will call this point \(\vec{p}\)). We do this by picking a random point on the unit hemisphere, and then transform it to the space of our scene as follows: \(\vec{\omega_i}:=M_\text{O2W}\vec{\omega_i}\). Then, we use the function <code>intersect</code> with the a ray \(R_i\) centered at \(\vec{p}\) and in the direction of \(\vec{\omega_i}\), where the minimum \(t\)-value of the ray is at our \(\epsilon\) (to avoid intersection with the primitive that point \(\vec{p}\) is on). We assume that the radiance emitted by the surface that \(R_i\) intersects first is \(L_i\) and the sample represents the radiance coming-in from \(\vec{\omega_i}\) in the direction from \(\vec{p}\) to our camera \(\vec{\omega}_o\). Now, we get the following for the sample of our radiance:\[S_i=f(\vec{\omega_i}\rightarrow\vec{\omega_o}) L_i\cos\theta_i\]where \(\theta_i=\vec{\omega_i}^\top\vec{n}\) (this is because our vectors are unit vectors and \(\vec{n}\) is the normal to our intersection point on our primitive).</li>
+					<li>For each sample, we pick a random vector \(\vec{\omega_i}\) in a hemisphere around the intersection point of our ray with our primitive (we will call this point \(\vec{p}\)). We do this by picking a random point on the unit hemisphere, and then transforming it to the space of our scene as follows: \(\vec{\omega_i}:=M_\text{O2W}\vec{\omega_i}\). Then, we use the function <code>intersect</code> with the a ray \(R_i\) centered at \(\vec{p}\) and in the direction of \(\vec{\omega_i}\), where the minimum \(t\)-value of \(R_i\) is at our \(\epsilon\) (to avoid intersection with the primitive that point \(\vec{p}\) is on). Let's say that the <code>intersect</code> call tells us that the radiance coming to \(\vec{p}\) from the surface that \(R_i\) intersects first is \(L_i\). We also define \(f\left(\vec{\omega_i}\rightarrow\vec{\omega_o}\right)\) as the reflectance of any light coming-in from \(-\vec{\omega_i}\) and going in \(\vec{\omega_o}\) after bouncing-off point \(\vec{p}\). Now, we get the following for the sample of our radiance:\[S_i=f(\vec{\omega_i}\rightarrow\vec{\omega_o}) L_i\cos\theta_i\]where \(\theta_i=\vec{\omega_i}^\top\vec{n}\) (this is because our vectors are unit vectors and \(\vec{n}\) is the normal to our intersection point on our primitive).</li>
 
-					<li>Finally, we sum-up our \(S_i\) values and divide by the number of samples to get our final estimated radiance coming into the camera.</li>
+					<li>Finally, we sum-up our \(S_i\) values and divide by the number of samples to get our final estimated radiance coming into the camera from point \(\vec{p}\).</li>
 
 				</ul>
 				For the direct importance lighting, we have the following method of sampling:
@@ -201,13 +196,13 @@
 
 					<li>We will sample separately for each light \(l\), and we will take the same number of samples for each light (specified by the <code>-l</code> flag). If the light emitter is a point mass, then we just take \(1\) sample.</li>
 					
-					<li>For each sample for each light, we will use the <code>sample_L</code> method on the light to get a random vector \(\vec{\omega_i}\) that points from \(\vec{p}\) to our light, the PDF \(p(\vec{\omega_i})\) of the sampling distribution, and the distance \(d_i\) from the sampled point on the light to our point \(p\).</li>
+					<li>For each sample for each light, we will use the <code>sample_L</code> method on the light to get a random vector \(\vec{\omega_i}\) that points from \(\vec{p}\) to our light. This function call also gives us the PDF \(p(\vec{\omega_i})\) of the sampling distribution, and the distance \(d_i\) from the sampled point on the light to our point \(p\).</li>
 					
-					<li>We then generate a ray \(R_i\) that is centered at \(p\) and goes in the direction of \(\vec{\omega_i}\) (just like in hemisphere lighting). This ray will have a minimum time of \(\epsilon\) to intersect (for the same reason as hemisphere lighting), but we will set the maximum time to \(d_i-\epsilon\) (as this ray is only to test if the path from \(\vec{p}\) to the light is obstructed or not). But this time, we will use the function <code>has_intersection</code> in our bounding-box to check if there is any primitive on the path between \(\vec{p}\) and the light (because we don't care about the properties of the primitive that was intersected or what specific time \(t\) that our ray intersects the obstruction). Assuming that the radiance emitted by the light is \(L_i\), we have the following sampled radiance:\[S_i=\frac{f(\vec{\omega_i}\rightarrow\vec{\omega_o}) L_i\cos\theta_i}{p\left(\vec{\omega_i}\right)}\]where \(\theta_i=\vec{\omega_i}^\top\vec{n}\).</li>
+					<li>We then generate a ray \(R_i\) that is centered at \(p\) and goes in the direction of \(\vec{\omega_i}\) (just like in hemisphere sampling). This ray will have a minimum time of \(\epsilon\) to intersect (for the same reason as hemisphere lighting), but we will set the maximum time to \(d_i-\epsilon\) (as this ray is only to test if the path from \(\vec{p}\) to the light is obstructed by some other primitive or not). Another difference from hemisphere sampling is that we will use the function <code>has_intersection</code> in our BVH to check if there is any primitive on the path between \(\vec{p}\) and the light (because we don't care about the properties of the primitive that was intersected or what specific time \(t\) that our ray intersects the obstruction). Assuming that the radiance emitted by the light is \(L_i\) (and we don't have an obstruction), we have the following sampled radiance:\[S_i=\frac{f\left(\vec{\omega_i}\rightarrow\vec{\omega_o}\right) L_i\cos\theta_i}{p\left(\vec{\omega_i}\right)}\]where \(\theta_i=\vec{\omega_i}^\top\vec{n}\). In the case of an obstruction, we will just return our radiance sample as \(\vec{0}\).</li>
 					
-					<li>Then for each light, we average all the samples.</li>
+					<li>Then for each light, we average all the samples for that specific light.</li>
 					
-					<li>We add-up these averages among all lights to get our final radiance.</li>
+					<li>We add-up the averages for each individual light to get our final radiance going into the camera from point \(\vec{p}\).</li>
 				
 				</ul>
 
@@ -259,7 +254,7 @@
 
 			<li>
 
-				Here are some renderings of <code>sky/CBspheres_lambertian.dae</code> using importance sampling with one sample per pixel:
+				Here are some renderings of <code>sky/CBspheres_lambertian.dae</code> using importance sampling and with one sample per pixel:
 				<table style="width: 100%; text-align: center; border-collapse: collapse;">
 					<tr>
 						<td style="text-align: center;">
@@ -282,13 +277,13 @@
 						</td>
 					</tr>
 				</table>
-				Our shadows are much more aliased/grainy on a lower number of samples per light, but we get much better clarity as we exponentially increase the number of samples. But, the highest improvments in aliasing for soft shadows appears at the initial increases in the number of samples per light, and we get somewhat of a "diminishing returns" as we increase <code>l</code> more and more. As we increase the number of samples per light, we also get a smoother transition from the dark parts of soft shadows to the ligher parts.
+				The command I used was: <code>./pathtracer -t 8 -s 1 -l LIGHT_SAMPLE_RATE -m 1 -f OUTPUT_FILE -r 480 480 ../dae/CBspheres_lambertian.dae</code>. Our shadows are much more aliased/grainy on a lower number of samples per light, but we get much better clarity as we exponentially increase the number of samples. But, the highest improvments in aliasing for soft shadows appears at the initial increases in the number of samples per light, and we get somewhat of a "diminishing returns" as we increase <code>l</code> more and more. As we increase the number of samples per light, we also get a smoother transition from the dark parts of soft shadows to the ligher parts.
 
 			</li>
 
 			<li>
 
-				Firstly, uniform hemisphere sampling creates much grainier/aliased images than importance sampling. This is due to the fact that there is a lot of randomness in whether our randomly-generated ray hits a light source from the point that our camera ray intersects a primitive. A lot of this "chance" is avoided in importance sampling, as we can force every ray that we look at to be one that is already in the direction of a light, and the only "luck" is whether there is an obstruction between our light ray and some other primitive in the scene. Additionally, uniform hemisphere sampling generally has a darker appearance. This is due, once again, to the lower probability of picking a random ray and hitting a light with the ray (this is more pronounced in models with very few light sources). But, again, the importance sampling avoids the luck of picking a ray that is directed towards a light source and not just some other surface. Finally, in the way that I implemented importance sampling, importance sampling actually runs much faster than the standard hemisphere sampling. This is because in hemisphere shading, we have to both detect an intersection and record the primitive of the first intersection in our BVH (this is so we know what object our bouncing ray hit). This requires us to traverse a large amount of the BVH using the <code>intersect</code> method, and we don't have many opportunities to short-circuit our traversal. But, in importance sampling, we only need the BVH to see if some object obstructs the path from our bouncing point to the light. So, we can just use the standard <code>has_intersection</code> method, which will just short-circuit when a collision is found (as we don't care about getting the first collision, just a collision within our specified \(t\)-range for our ray).
+				Firstly, uniform hemisphere sampling creates much grainier/aliased images than importance sampling. This is due to the fact that there is a lot of randomness in whether our randomly-generated ray hits a light source from the point that our camera ray intersects a primitive. A lot of this "chance" is avoided in importance sampling, as we can force every ray that we look at to be one that is already in the direction of a light, and the only "luck" is whether there is an obstruction between our point \(\vec{p}\) and the source of the light ray in the scene. Additionally, uniform hemisphere sampling generally has a darker appearance. This is due, once again, to the lower probability of picking a random ray and hitting a light with the ray (this is more pronounced in models with very few light sources). This is contrasted with how importance sampling avoids the luck of picking a ray that is directed towards a light source and not just some other surface. Finally, in the way that I implemented importance sampling, importance sampling actually runs much faster than the standard hemisphere sampling. This is because in hemisphere sampling, we have to both detect an intersection and record the primitive of the first intersection in our BVH (this is so we know what object our bouncing ray hit). This requires us to traverse a large amount of the BVH using the <code>intersect</code> method, and we don't have many opportunities to short-circuit our traversal. But, in importance sampling, we only need the BVH to see if some object obstructs the path from our bouncing point to the light. So, we can just use the <code>has_intersection</code> method, which will just short-circuit when a collision is found (as we don't care about specifically identifying the first collision, but rather we just want to know if a collision within our ray's specified \(t\)-range exists or not).
 
 			</li>
 
@@ -299,38 +294,38 @@
 
 			<li>
 
-				To perform indirect illumination, I first set a depth limit to each ray and set it to <code>max_ray_depth</code>. Then, I did the following in the <code>est_radiance_global_illumination</code>:
+				To perform indirect illumination, I first set the depth limit of each generated camera ray to <code>max_ray_depth</code>. Then, I did the following in the <code>est_radiance_global_illumination</code> function:
 				<ul>
 
-					<li>If we are accumulating bounces or the max depth is \(0\), then I will set \(L_o\) equal to the zero-bounce light for the ray. If not, then I initialize \(L_o\) to be \(\vec{0}\) (because we only care about the last bounce).</li>
+					<li>If we are accumulating bounces or the max depth is \(0\), then I will set \(L_o\) equal to the zero-bounce light for the ray. If not, then I initialize \(L_o\) to be \(\vec{0}\) (because if we don't accumulate bounces, then we only care about the last bounce).</li>
 
-					<li>If the max depth is greater than \(0\), then we execute <code>at_least_once_bounce_radiance</code> and add it to \(L_o\).</li>
+					<li>After initializing \(L_o\), if the max depth is greater than \(0\), then we execute <code>at_least_once_bounce_radiance</code> and add it to \(L_o\).</li>
 
 				</ul>
 				For <code>at_least_one_bounce_radiance</code>, we do the following:
 				<ul>
 
-					<li>To get the one-bounce radiance at the current point \(\vec{p}\) on the primitive that my camera ray (\(R\)) has hit, I use <code>one_bounce_radiance</code>. This ensures that we are actually finding the radiance after each ray bounce. We set this to \(L_o\) within our function.</li>
+					<li>To get the one-bounce radiance at the current point \(\vec{p}\) on the primitive that my camera ray (\(R\)) has hit, I use <code>one_bounce_radiance</code>. This ensures that we are actually finding the radiance after each ray bounce. I define this radiance as \(L\) within my function (I set \(L\) to start-off as zero if we are not accumulating light and I have not reached the final bounce yet).</li>
 
-					<li>Now, we pick a random vector \(\vec{\omega_i}\) according to the BSDF of our current surface (this is done with <code>sample_f</code> on our primitive's BSDF). This also provides us with \(f(\vec{\omega_i}\rightarrow\vec{\omega_o})\) (the reflectance from the random incoming ray to point \(\vec{p}\) to the previous bounce in our indirect illumination invocation).</li>
+					<li>Now, we pick a random vector \(\vec{\omega_i}\) according to the BSDF of our current surface (this is done with <code>sample_f</code> on our primitive's BSDF). This also provides us with \(f(\vec{\omega_i}\rightarrow\vec{\omega_o})\) (the reflectance from the random incoming ray to the reverse of the previous bounce direction) and our PDF \(p\left(\vec{\omega_i}\right)\).</li>
 					
-					<li>Create a "next-bounce" ray \(R_b\) centered at point \(\vec{p}\) and in the direction of \(\vec{\omega_i}\). Then, we use the <code>intersect</code> function on our BVH to get the next primitive that \(R_b\) will hit. This represents the ray that we will use for our next bounce. We also set this new ray's depth to be \(1\) less than the depth of the ray inputted into the current iteration of <code>at_least_one_bounce_radiance</code>.</li>
+					<li>Create a "next-bounce" ray \(R_b\) centered at point \(\vec{p}\) and in the direction of \(\vec{\omega_i}\). We also set \(R_b\)'s depth to be \(1\) less than the depth of the ray \(R\). Then, we use the <code>intersect</code> function on our BVH to get the next primitive that \(R_b\) will hit. This intersection point \(\vec{p_b}\) represents the origin of the next bounce's ray.</li>
 
-					<li>If \(R_b\)'s depth is at \(0\), then we just return \(L_o\) and stop the recursion.</li>
+					<li>If \(R_b\)'s depth is at \(0\), then we just return \(L\) and stop the recursion.</li>
 
-					<li>To calculate the addition to \(L_o\) for our next iteration, we have the following cases:
+					<li>To calculate the addition to \(L\) for our next iteration, we have the following cases:
 
 						<ul>
 
-							<li>If \(\vec{r}\)'s depth is at the max depth value and the max depth is at least \(2\), then we use the following as our addition (similar to the direct lighting in part 3):\[L_{o,a}=\frac{f(\vec{\omega_i}\rightarrow\vec{\omega_o})\cdot B\left(R_b\right)\cdot\cos\theta_i}{p\left(\vec{\omega_i}\right)}\] where \(B\) represents a call to the <code>at_least_one_bounce_radiance</code> function (as we need to run it to see what radiance will come from the next bounce with \(R_b\)).</li>
+							<li>If \(R\)'s depth is at the max depth value and the max depth is at least \(2\), then we use the following as our addition to the radiance (similar to the direct lighting in part 3):\[L_{a}=\frac{f\left(\vec{\omega_i}\rightarrow\vec{\omega_o}\right)\cdot B\left(R_b\right)\cdot\cos\theta_i}{p\left(\vec{\omega_i}\right)}\] where \(B\) represents a call to the <code>at_least_one_bounce_radiance</code> function (as we need to run it to see what radiance will come from the next bounce with \(R_b\)).</li>
 
-							<li>We do this if the conditions for the previous case are not satisfied. Russian Roulette: We have a coin with bias \(q\) (I personally chose \(q=0.4\)), and if it flips heads, we set \(L_{o,a}=0\) (i.e. we stop our indirect lighting recursion). If not, then we have the following choice for \(L_{o,a}\) (we add the \(q\)-term to account for the fact that we are adding an additional probability on top of \(p\left(\vec{\omega_i}\right)\) when generating our Monte-Carlo estimate):\[L_{o,a}=\frac{f(\vec{\omega_i}\rightarrow\vec{\omega_o})\cdot B\left(R_b\right)\cdot\cos\theta_i}{(1-q)\cdot p\left(\vec{\omega_i}\right)}\]</li>
+							<li>We perform Russian Roulette if the conditions for the previous case are not satisfied. We have a coin with bias \(q\) (I personally chose \(q=0.4\)), and if it flips heads, we set \(L_{a}=0\) (i.e. we stop our indirect lighting recursion). If not, then we have the following choice for \(L_{a}\) (we include the \(q\)-term to account for the fact that we are adding an additional probability on top of \(p\left(\vec{\omega_i}\right)\) when generating our Monte-Carlo estimate):\[L_{a}=\frac{f\left(\vec{\omega_i}\rightarrow\vec{\omega_o}\right)\cdot B\left(R_b\right)\cdot\cos\theta_i}{(1-q)\cdot p\left(\vec{\omega_i}\right)}\]</li>
 
 						</ul>
 
 					</li>
 
-					<li>If we want to accumulate bounces, then we set \(L_o:=L_o+L_{o,a}\). If we don't, then we set \(L_o:=L_{o,a}\) (as we only care about the last bounce).</li>
+					<li>If we want to accumulate bounces, then we set \(L:=L+L_{a}\). If we don't, then we set \(L:=L_{a}\) (as we only care about the last bounce).</li>
 
 				</ul>
 
@@ -338,7 +333,7 @@
 
 			<li>
 
-				Here are some renderings with direct and indirect illumination:
+				Here are some renderings with global illumination:
 
 				<div style="display: flex; flex-direction: column; align-items: center;">
 					<table style="width: 100%; text-align: center; border-collapse: collapse;">
@@ -371,7 +366,7 @@
 
 			<li>
 
-				Here are some renderings with only direct vs. only indirect illumination:
+				Here are some renderings with only direct vs. only indirect lighting:
 				<table style="width: 100%; text-align: center; border-collapse: collapse;">
 					<tr>
 						<td style="text-align: center;">Direct Lighting</td>
@@ -388,15 +383,15 @@
 						</td>
 					</tr>
 				</table>
-				The command used is: <code>./pathtracer -t 8 -s 1024 -l 1 -m [1 if DIRECT and 4 if INDIRECT] -f OUTPUT_FILE -r 480 480 ../dae/DAE_FILE</code>. In my code for the indirect lighting, I temporarily set it so only the second bounce and onwards is counted when accumulating light in <code>at_least_once_bounce_radiance</code>.
+				The command used is: <code>./pathtracer -t 8 -s 1024 -l 1 -m [1 if DIRECT and 4 if INDIRECT] -f OUTPUT_FILE -r 480 480 ../dae/DAE_FILE</code>. In my code for the indirect lighting, I temporarily set it so only the second bounce and onwards is counted when accumulating light in <code>at_least_once_bounce_radiance</code>. As for comparing the two, we can see that the direct lighting more clearly highlights what shadows will dominate the scene if the scene were placed in a real-life physical lighting simulation. But, the strength of these shadows is too strong. This is contrasted with what happens after the first bounce (indirect lighting). In indirect lighting, we see that the light bounces-off the walls of the room to give the left-side of the wall a red tint and the right-side of the wall a blue tint (similar to how light repeatedly bounces off objects in the real-world). But, we do not have the pronounced shadows with indirect lighting, as the indirect lighting is meant to highlight more subtle details of the scene that are necessary to depict realistic lighting. Indirect lighting also depicts shadows as not being purely black and just darker tones of the underlying surface color (unlike with direct lighting, where shadows are extremely dark due to light not being able to bounce off of more than one surface). Finally, the indirect lighting shows shadows in other parts of the image, which aren't present in the direct lighting case (this is because these extra shadows require more than one bounce of light from the light source).
 
 			</li>
 
 			<li>
-				Here are renderings with accumulated vs. un-accumulated light bounces:
+				Here are renderings with accumulated vs. non-accumulated light bounces on <code>sky/CBbunny.dae</code>:
 				<table style="width: 100%; text-align: center; border-collapse: collapse;">
 					<tr>
-						<td></td>
+						<td style="text-align: center;">Accumulated Bounces</td>
 						<td style="text-align: center;">\(m=0\)</td>
 						<td style="text-align: center;">\(m=1\)</td>
 						<td style="text-align: center;">\(m=2\)</td>
@@ -405,49 +400,49 @@
 						<td style="text-align: center;">\(m=5\)</td>
 					</tr>
 					<tr>
-						<td style="text-align: center;"><code>isAccumBounces=true</code></td>
+						<td style="text-align: center;"><code>true</code></td>
 						<td style="text-align: center;">
-						<img src="images/p4_7.png" width="200px"/>
+						<img src="images/p4_7.png" width="150px"/>
 						</td>
 						<td style="text-align: center;">
-						<img src="images/p4_8.png" width="200px"/>
+						<img src="images/p4_8.png" width="150px"/>
 						</td>
 						<td style="text-align: center;">
-						<img src="images/p4_9.png" width="200px"/>
+						<img src="images/p4_9.png" width="150px"/>
 						</td>
 						<td style="text-align: center;">
-						<img src="images/p4_10.png" width="200px"/>
+						<img src="images/p4_10.png" width="150px"/>
 						</td>
 						<td style="text-align: center;">
-						<img src="images/p4_11.png" width="200px"/>
+						<img src="images/p4_11.png" width="150px"/>
 						</td>
 						<td style="text-align: center;">
-						<img src="images/p4_12.png" width="200px"/>
+						<img src="images/p4_12.png" width="150px"/>
 						</td>
 					</tr>
 					<tr>
-						<td style="text-align: center;"><code>isAccumBounces=false</code></td>
+						<td style="text-align: center;"><code>false</code></td>
 						<td style="text-align: center;">
-						<img src="images/p4_13.png" width="200px"/>
+						<img src="images/p4_13.png" width="150px"/>
 						</td>
 						<td style="text-align: center;">
-						<img src="images/p4_14.png" width="200px"/>
+						<img src="images/p4_14.png" width="150px"/>
 						</td>
 						<td style="text-align: center;">
-						<img src="images/p4_15.png" width="200px"/>
+						<img src="images/p4_15.png" width="150px"/>
 						</td>
 						<td style="text-align: center;">
-						<img src="images/p4_16.png" width="200px"/>
+						<img src="images/p4_16.png" width="150px"/>
 						</td>
 						<td style="text-align: center;">
-						<img src="images/p4_17.png" width="200px"/>
+						<img src="images/p4_17.png" width="150px"/>
 						</td>
 						<td style="text-align: center;">
-						<img src="images/p4_18.png" width="200px"/>
+						<img src="images/p4_18.png" width="150px"/>
 						</td>
 					</tr>
 				</table>
-				The command used is: <code>./pathtracer -t 8 -s 1024 -l 1 -m BOUNCE_LIMIT -o [1 if ACCUMULATION, 0 if NO ACCUMULATION] -f OUTPUT_FILE -r 480 480 ../dae/sky/CBbunny.dae</code>. To test without Russian Roulette, I just set \(q:=0\) temporarily. The non-accumulated version of the renderings have a much starker difference for different values of \(m\) than with the accumulated versions. The accumulated renderings have somewhat of a "diminishing returns" after around \(m=3\) (until then, the images appear to get a little brighter each time with increasing \(m\)). The reason for this is likely the fact that the non-accumulated images get darker as \(m\) grows, because we don't have as many intersections with the light source, and the radiance gets dampened as we perform the calculation for \(L_{a,o}\) up the recursive stack. Therefore, as \(m\) increases, each additional bounce of light adds less and less color to our image. But, an interesting thing to note is that \(m=2\) has our non-accumulated image with light reflected on the underside of the rabbit (because in \(m=1\), our camera ray "bounces" off the floor of the scene to hit the light, but at \(m=2\), our camera ray bounces off the underside of the rabbit and hits the floor, leading to the underside of the rabbit being illuminated). At \(m=3\), we observe a similar pattern, where the rabbit is once again lit on the top of its body, because the light on the ceiling now bounces back onto the rabbit's top part of the body. In real-life, light bounces off of objects to create the lighting we see in the natural world, and the fact that each different \(m\)-value adds shading to a different part of the rabbit gives us a more natural appearance to our scene when the light is accumulated over bounces. This is in contrast to simple rasterization, where we just sample an image/scene without any regard for the physics of light and how it bounces-off and alters the color of objects based on different objects' surface BRDFs (but, as expected, simulating this lighting/bouncing is computationally costly).
+				The command used is: <code>./pathtracer -t 8 -s 1024 -l 1 -m BOUNCE_LIMIT -o [1 if ACCUMULATION, 0 if NO ACCUMULATION] -f OUTPUT_FILE -r 480 480 ../dae/sky/CBbunny.dae</code>. To test without Russian Roulette, I just set \(q:=0\) temporarily. The non-accumulated version of the renderings have a much starker difference for different values of \(m\) than with the accumulated versions. The accumulated renderings have somewhat of a "diminishing returns" after around \(m=3\) (until then, the images appear to get a little brighter and more realistically reflect red/blue light with increasing \(m\)). The reason for this is likely the fact that the non-accumulated images get darker as \(m\) grows, because we don't have as many intersections with the light source, and the radiance gets dampened as we perform the calculation for \(L_{a}\) as we go up the recursive stack. Therefore, as \(m\) increases, each additional bounce of light contributes less and less to the final colors in our rendering. But, an interesting thing to note is that \(m=2\) has our non-accumulated image with light reflected on the underside of the rabbit (because in \(m=1\), our camera ray "bounces" off the floor of the scene to hit the light, but at \(m=2\), our camera ray bounces off the underside of the rabbit and hits the floor, therefore absorbing the radiance that appeared on the floor at \(m=1\)). At \(m=3\), we observe a similar pattern, where the rabbit is once again lit on the top of its body, because the light on the ceiling now bounces back onto the rabbit's top part of the body. In real-life, light bounces off of objects to create the lighting we see in the natural world, and the fact that each different \(m\)-value adds shading to a different part of the rabbit gives us a more natural appearance to our scene when the light is accumulated over bounces. This is in contrast to simple rasterization (ex. the normal shading we performed in parts 1 and 2), where we just sample an image/scene without any regard for the physics of light and how it bounces-off and alters the color of objects based on different objects' surface BRDFs. However, simulating this lighting/bouncing is evidently computationally costly.
 			</li>
 
 			<li>
@@ -486,42 +481,42 @@
 			The command used is: <code>./pathtracer -t 8 -s 1024 -l 1 -m BOUNCE_LIMIT -f OUTPUT_FILE -r 480 480 ../dae/sky/CBbunny.dae</code>.
 
 			<li>
-				Here are some renderings of <code>sky/dragon.dae</code> at different pixel sampling rates and with \(4\) light rays and \(m=2\) (and Russian Roulette):
+				Here are some renderings of <code>sky/dragon.dae</code> at different pixel sampling rates and with \(4\) light rays, \(m=2\), and Russian Roulette:
 				<table style="width: 100%; text-align: center; border-collapse: collapse;">
 					<tr>
 						<td style="text-align: center;">
-						<img src="images/p4_25.png" width="300px"/>
+						<img src="images/p4_25.png" width="250px"/>
 						<figcaption>\(s=1\)</figcaption>
 						</td>
 						<td style="text-align: center;">
-						<img src="images/p4_26.png" width="300px"/>
+						<img src="images/p4_26.png" width="250px"/>
 						<figcaption>\(s=2\)</figcaption>
 						</td>
 						<td style="text-align: center;">
-						<img src="images/p4_27.png" width="300px"/>
+						<img src="images/p4_27.png" width="250px"/>
 						<figcaption>\(s=4\)</figcaption>
 						</td>
 						<td style="text-align: center;">
-						<img src="images/p4_28.png" width="300px"/>
+						<img src="images/p4_28.png" width="250px"/>
 						<figcaption>\(s=8\)</figcaption>
 						</td>
 					</tr>
 					<tr style="text-align: center;">
 						<td style="text-align: center;">
-						<img src="images/p4_29.png" width="300px"/>
+						<img src="images/p4_29.png" width="250px"/>
 						<figcaption>\(s=16\)</figcaption>
 						</td>
 						<td style="text-align: center;">
-						<img src="images/p4_30.png" width="300px"/>
+						<img src="images/p4_30.png" width="250px"/>
 						<figcaption>\(m=64\)</figcaption>
 						</td>
 						<td style="text-align: center;">
-						<img src="images/p4_31.png" width="300px"/>
+						<img src="images/p4_31.png" width="250px"/>
 						<figcaption>\(m=1024\)</figcaption>
 						</td>
 					</tr>
 				</table>
-				The command used is: <code>./pathtracer -t 8 -s SAMPLING_RATE -l 4 -m 2 -f OUTPUT_FILE -r 480 480 ../dae/sky/dragon.dae</code>.
+				The command used is: <code>./pathtracer -t 8 -s SAMPLING_RATE -l 4 -m 2 -f OUTPUT_FILE -r 480 480 ../dae/sky/dragon.dae</code>. The dragon becomes less grainy as we exponentially increase the sample rate, and we get a more smooth surface on the dragon as we increase \(m\). The shadow also becomes sharper and more pronounced as we increase the sampling rate (as expected). Additionally, the texture of the dragon's skin becomes more clear/precise as we increase the sampling rate, and we can even see shadows on the underside of the dragon due to the light being allowed to bounce more than one time.
 			</li>
 
 		</ol>
@@ -531,20 +526,20 @@
 		<ol>
 
 			<li>
-				Adaptive sampling is essentially a technique to allow us to take fewer samples of certain pixels onvariances our screen based on the variance of the samples that we have already taken of that pixel. If we have a high-variance pixel on the screen (i.e. each random sampling of a ray through the pixel and into the scene gives significantly different values for the radiance), then we will have to take a lot of samples, but if we end-up finding that our initial samples are all very close to each other in-value, we can just terminate our sampling of the pixel prematurely (just decide the color of the pixel based on fewer samples). This is based on the statistical principle that if you have \(n\) i.i.d. random variables, and you try and get the average of them, the probability of you being within some \(I\) of the mean is better if you have a low variance for each trial and a larger value of \(n\). So, we exploit this to get a color that is within \(\pm I\) of the true mean \(\mu\) of all rays through that pixel. As for my implementation, I do the following for each batch (which I will call \(B_i\)) of my <code>ns_aa</code> maximum number of samples:
+				Adaptive sampling is essentially a technique that allows us to take fewer samples of certain pixels on our screen based on the variance of the samples that we have already taken of that pixel. If we have a high-variance pixel on the screen (i.e. each random sampling of a ray through the pixel and into the scene gives a significantly different radiance), then we will have to take a lot of samples to get a good estimate of the average radiance of a ray through the pixel. But, if we end-up finding that our initial few radiance amples of a pixel are all very close to one another, we can just terminate our sampling of the pixel prematurely (and just decide the color of the pixel based on the few samples we have already taken). This is based on the statistical principle that if you have \(n\) i.i.d. random variables, and you try and estimate the mean, the probability of you being within some value \(I\) of the mean is better if you have a low variance for each trial and a larger value of \(n\). So, we exploit this principle to use fewer samples to get a radiance that is within \(\pm I\) of the true mean \(\mu\) of all rays through that pixel. As for my implementation, I split the <code>ns_aa</code> samples into batches, and for each \(i\)-th batch \(B_i\), I do the following:
 				<ul>
 
-					<li>To first establish: my batch is at most size <code>samplesPerBatch</code>, but it is clamped by the remaining number of samples I can at most take according to <code>ns_aa</code>. I also maintain a running sum of the luminances (\(s_1\)), the squared luminances (\(s_2\)), and the total number of samples evaluated so far.</li>
+					<li>Necessary info: my batch is at most size <code>samplesPerBatch</code>, but it is clamped by the remaining number of samples I can at most take according to <code>ns_aa</code> minus \(n\) (the number of samples evaluated so far). I also maintain a running sum of the luminances (\(s_1\)) and the squared luminances (\(s_2\)) among all \(n\) samples.</li>
 
-					<li>I will take samples of random rays through this pixel just like in part 1 of this homework. I will take the luminances of each sample (using <code>illum</code>) and add the value to \(s_1\) and the squared value to \(s_2\).</li>
+					<li>I first take \(|B_i|\) samples of random rays through our pixel just like in part 1 of this homework. I will take the luminances of each sample (using <code>illum</code>) and add the value to \(s_1\) and the squared value to \(s_2\).</li>
 					
 					<li>I increment the number of evaluated samples (\(n\)) by \(|B_i|\).</li>
 
-					<li>I calculate the standard deviation and average of the samples so far as follows:\[\text{MEAN}=\frac{s_1}{n}\]\[\text{STD}=\sqrt{\frac{1}{n-1}\left(s_2-\frac{s_1^2}{n}\right)}\]</li>
+					<li>I calculate the standard deviation and average of the samples so far as follows:\[\mu=\frac{s_1}{n}\]\[\sigma=\sqrt{\frac{1}{n-1}\left(s_2-\frac{s_1^2}{n}\right)}\]</li>
 
-					<li>I define \(I=1.96\cdot\frac{\sigma}{\sqrt{n}}\) (which roughly describes how "close" my average is so far to the true mean radiance of the pixel).</li>
+					<li>I define \(I=1.96\cdot\frac{\sigma}{\sqrt{n}}\) (which roughly describes how likely "close" my current average is to the true mean radiance of the pixel).</li>
 
-					<li>If \(I\leq\text{TOLERANCE}*\text{MEAN}\), then I know that I have reached my desired confidence-level of how close my mean is to the true mean (the desired confidence-level is specified by \(\text{TOLERANCE}\)). If this happens, then I finish sampling and just return the average of my samples so far.</li>
+					<li>If \(I\leq T\mu\), then I know that I have reached the desired confidence-level of how close my mean is likely to be to the true mean (the desired confidence-level \(T\) is specified by the tolerance passed-in through the CLI command). If this happens, then I stop sampling for this pixel and just return the average radiance of my samples so far.</li>
 
 					<li>If we have not reached our desired confidence yet, then we just move-on to the next batch (or take the average if we have already reached our maximum number of samples).</li>
 
@@ -575,7 +570,7 @@
 						</td>
 					</tr>
 				</table>
-				The command used is: <code>./pathtracer -t 8 -s 2048 -a 64 0.05 -l 1 -m 5 -r 480 360 -f OUTPUT_FILE ../dae/sky/dragon.dae</code>
+				The command I used is: <code>./pathtracer -t 8 -s 2048 -a 64 0.05 -l 1 -m 5 -r 480 360 -f OUTPUT_FILE ../dae/sky/dragon.dae</code>
 			</li>
 
 		</ol>
