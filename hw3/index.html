@@ -295,10 +295,291 @@
 		</ol>
 
 		<h2>Part 4: Global Illumination</h2>
-		Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum.
+		<ol>
+
+			<li>
+
+				To perform indirect illumination, I first set a depth limit to each ray and set it to <code>max_ray_depth</code>. Then, I did the following in the <code>est_radiance_global_illumination</code>:
+				<ul>
+
+					<li>If we are accumulating bounces or the max depth is \(0\), then I will set \(L_o\) equal to the zero-bounce light for the ray. If not, then I initialize \(L_o\) to be \(\vec{0}\) (because we only care about the last bounce).</li>
+
+					<li>If the max depth is greater than \(0\), then we execute <code>at_least_once_bounce_radiance</code> and add it to \(L_o\).</li>
+
+				</ul>
+				For <code>at_least_one_bounce_radiance</code>, we do the following:
+				<ul>
+
+					<li>To get the one-bounce radiance at the current point \(\vec{p}\) on the primitive that my camera ray (\(R\)) has hit, I use <code>one_bounce_radiance</code>. This ensures that we are actually finding the radiance after each ray bounce. We set this to \(L_o\) within our function.</li>
+
+					<li>Now, we pick a random vector \(\vec{\omega_i}\) according to the BSDF of our current surface (this is done with <code>sample_f</code> on our primitive's BSDF). This also provides us with \(f(\vec{\omega_i}\rightarrow\vec{\omega_o})\) (the reflectance from the random incoming ray to point \(\vec{p}\) to the previous bounce in our indirect illumination invocation).</li>
+					
+					<li>Create a "next-bounce" ray \(R_b\) centered at point \(\vec{p}\) and in the direction of \(\vec{\omega_i}\). Then, we use the <code>intersect</code> function on our BVH to get the next primitive that \(R_b\) will hit. This represents the ray that we will use for our next bounce. We also set this new ray's depth to be \(1\) less than the depth of the ray inputted into the current iteration of <code>at_least_one_bounce_radiance</code>.</li>
+
+					<li>If \(R_b\)'s depth is at \(0\), then we just return \(L_o\) and stop the recursion.</li>
+
+					<li>To calculate the addition to \(L_o\) for our next iteration, we have the following cases:
+
+						<ul>
+
+							<li>If \(\vec{r}\)'s depth is at the max depth value and the max depth is at least \(2\), then we use the following as our addition (similar to the direct lighting in part 3):\[L_{o,a}=\frac{f(\vec{\omega_i}\rightarrow\vec{\omega_o})\cdot B\left(R_b\right)\cdot\cos\theta_i}{p\left(\vec{\omega_i}\right)}\] where \(B\) represents a call to the <code>at_least_one_bounce_radiance</code> function (as we need to run it to see what radiance will come from the next bounce with \(R_b\)).</li>
+
+							<li>We do this if the conditions for the previous case are not satisfied. Russian Roulette: We have a coin with bias \(q\) (I personally chose \(q=0.4\)), and if it flips heads, we set \(L_{o,a}=0\) (i.e. we stop our indirect lighting recursion). If not, then we have the following choice for \(L_{o,a}\) (we add the \(q\)-term to account for the fact that we are adding an additional probability on top of \(p\left(\vec{\omega_i}\right)\) when generating our Monte-Carlo estimate):\[L_{o,a}=\frac{f(\vec{\omega_i}\rightarrow\vec{\omega_o})\cdot B\left(R_b\right)\cdot\cos\theta_i}{(1-q)\cdot p\left(\vec{\omega_i}\right)}\]</li>
+
+						</ul>
+
+					</li>
+
+					<li>If we want to accumulate bounces, then we set \(L_o:=L_o+L_{o,a}\). If we don't, then we set \(L_o:=L_{o,a}\) (as we only care about the last bounce).</li>
+
+				</ul>
+
+			</li>
+
+			<li>
+
+				Here are some renderings with direct and indirect illumination:
+
+				<div style="display: flex; flex-direction: column; align-items: center;">
+					<table style="width: 100%; text-align: center; border-collapse: collapse;">
+						<tr>
+							<td style="text-align: center;">
+							<img src="images/p4_1.png" width="400px"/>
+							<figcaption><code>keenan/banana.dae</code></figcaption>
+							</td>
+							<td style="text-align: center;">
+							<img src="images/p4_2.png" width="400px"/>
+							<figcaption><code>sky/CBspheres_lambertian.dae</code></figcaption>
+							</td>
+						</tr>
+						<tr>
+							<td style="text-align: center;">
+							<img src="images/p4_3.png" width="400px"/>
+							<figcaption><code>sky/wall-e.dae</code></figcaption>
+							</td>
+							<td style="text-align: center;">
+							<img src="images/p4_4.png" width="400px"/>
+							<figcaption><code>sky/bench.dae</code></figcaption>
+							</td>
+						</tr>
+					</table>
+				</div>
+
+				The command used is: <code>./pathtracer -t 8 -s 1024 -l 1 -m 4 -f OUTPUT_FILE -r 480 480 ../dae/DAE_FILE</code>
+
+			</li>
+
+			<li>
+
+				Here are some renderings with only direct vs. only indirect illumination:
+				<table style="width: 100%; text-align: center; border-collapse: collapse;">
+					<tr>
+						<td style="text-align: center;">Direct Lighting</td>
+						<td style="text-align: center;">Indirect Lighting</td>
+					</tr>
+					<tr>
+						<td style="text-align: center;">
+						<img src="images/p4_5.png" width="400px"/>
+						<figcaption><code>sky/CBbunny.dae</code></figcaption>
+						</td>
+						<td style="text-align: center;">
+						<img src="images/p4_6.png" width="400px"/>
+						<figcaption><code>sky/CBbunny.dae</code></figcaption>
+						</td>
+					</tr>
+				</table>
+				The command used is: <code>./pathtracer -t 8 -s 1024 -l 1 -m [1 if DIRECT and 4 if INDIRECT] -f OUTPUT_FILE -r 480 480 ../dae/DAE_FILE</code>. In my code for the indirect lighting, I temporarily set it so only the second bounce and onwards is counted when accumulating light in <code>at_least_once_bounce_radiance</code>.
+
+			</li>
+
+			<li>
+				Here are renderings with accumulated vs. un-accumulated light bounces:
+				<table style="width: 100%; text-align: center; border-collapse: collapse;">
+					<tr>
+						<td></td>
+						<td style="text-align: center;">\(m=0\)</td>
+						<td style="text-align: center;">\(m=1\)</td>
+						<td style="text-align: center;">\(m=2\)</td>
+						<td style="text-align: center;">\(m=3\)</td>
+						<td style="text-align: center;">\(m=4\)</td>
+						<td style="text-align: center;">\(m=5\)</td>
+					</tr>
+					<tr>
+						<td style="text-align: center;"><code>isAccumBounces=true</code></td>
+						<td style="text-align: center;">
+						<img src="images/p4_7.png" width="200px"/>
+						</td>
+						<td style="text-align: center;">
+						<img src="images/p4_8.png" width="200px"/>
+						</td>
+						<td style="text-align: center;">
+						<img src="images/p4_9.png" width="200px"/>
+						</td>
+						<td style="text-align: center;">
+						<img src="images/p4_10.png" width="200px"/>
+						</td>
+						<td style="text-align: center;">
+						<img src="images/p4_11.png" width="200px"/>
+						</td>
+						<td style="text-align: center;">
+						<img src="images/p4_12.png" width="200px"/>
+						</td>
+					</tr>
+					<tr>
+						<td style="text-align: center;"><code>isAccumBounces=false</code></td>
+						<td style="text-align: center;">
+						<img src="images/p4_13.png" width="200px"/>
+						</td>
+						<td style="text-align: center;">
+						<img src="images/p4_14.png" width="200px"/>
+						</td>
+						<td style="text-align: center;">
+						<img src="images/p4_15.png" width="200px"/>
+						</td>
+						<td style="text-align: center;">
+						<img src="images/p4_16.png" width="200px"/>
+						</td>
+						<td style="text-align: center;">
+						<img src="images/p4_17.png" width="200px"/>
+						</td>
+						<td style="text-align: center;">
+						<img src="images/p4_18.png" width="200px"/>
+						</td>
+					</tr>
+				</table>
+				The command used is: <code>./pathtracer -t 8 -s 1024 -l 1 -m BOUNCE_LIMIT -o [1 if ACCUMULATION, 0 if NO ACCUMULATION] -f OUTPUT_FILE -r 480 480 ../dae/sky/CBbunny.dae</code>. To test without Russian Roulette, I just set \(q:=0\) temporarily. The non-accumulated version of the renderings have a much starker difference for different values of \(m\) than with the accumulated versions. The accumulated renderings have somewhat of a "diminishing returns" after around \(m=3\) (until then, the images appear to get a little brighter each time with increasing \(m\)). The reason for this is likely the fact that the non-accumulated images get darker as \(m\) grows, because we don't have as many intersections with the light source, and the radiance gets dampened as we perform the calculation for \(L_{a,o}\) up the recursive stack. Therefore, as \(m\) increases, each additional bounce of light adds less and less color to our image. But, an interesting thing to note is that \(m=2\) has our non-accumulated image with light reflected on the underside of the rabbit (because in \(m=1\), our camera ray "bounces" off the floor of the scene to hit the light, but at \(m=2\), our camera ray bounces off the underside of the rabbit and hits the floor, leading to the underside of the rabbit being illuminated). At \(m=3\), we observe a similar pattern, where the rabbit is once again lit on the top of its body, because the light on the ceiling now bounces back onto the rabbit's top part of the body. In real-life, light bounces off of objects to create the lighting we see in the natural world, and the fact that each different \(m\)-value adds shading to a different part of the rabbit gives us a more natural appearance to our scene when the light is accumulated over bounces. This is in contrast to simple rasterization, where we just sample an image/scene without any regard for the physics of light and how it bounces-off and alters the color of objects based on different objects' surface BRDFs (but, as expected, simulating this lighting/bouncing is computationally costly).
+			</li>
+
+			<li>
+				Here are renderings with Russian roulette (I rendered <code>sky/CBbunny.dae</code>):
+				<table style="width: 100%; text-align: center; border-collapse: collapse;">
+					<tr>
+						<td style="text-align: center;">
+						<img src="images/p4_19.png" width="300px"/>
+						<figcaption>\(m=0\)</figcaption>
+						</td>
+						<td style="text-align: center;">
+						<img src="images/p4_20.png" width="300px"/>
+						<figcaption>\(m=1\)</figcaption>
+						</td>
+						<td style="text-align: center;">
+						<img src="images/p4_21.png" width="300px"/>
+						<figcaption>\(m=2\)</figcaption>
+						</td>
+					</tr>
+					<tr>
+						<td style="text-align: center;">
+						<img src="images/p4_22.png" width="300px"/>
+						<figcaption>\(m=3\)</figcaption>
+						</td>
+						<td style="text-align: center;">
+						<img src="images/p4_23.png" width="300px"/>
+						<figcaption>\(m=4\)</figcaption>
+						</td>
+						<td style="text-align: center;">
+						<img src="images/p4_24.png" width="300px"/>
+						<figcaption>\(m=100\)</figcaption>
+						</td>
+					</tr>
+				</table>
+			</li>
+			The command used is: <code>./pathtracer -t 8 -s 1024 -l 1 -m BOUNCE_LIMIT -f OUTPUT_FILE -r 480 480 ../dae/sky/CBbunny.dae</code>.
+
+			<li>
+				Here are some renderings of <code>sky/dragon.dae</code> at different pixel sampling rates and with \(4\) light rays and \(m=2\) (and Russian Roulette):
+				<table style="width: 100%; text-align: center; border-collapse: collapse;">
+					<tr>
+						<td style="text-align: center;">
+						<img src="images/p4_25.png" width="300px"/>
+						<figcaption>\(s=1\)</figcaption>
+						</td>
+						<td style="text-align: center;">
+						<img src="images/p4_26.png" width="300px"/>
+						<figcaption>\(s=2\)</figcaption>
+						</td>
+						<td style="text-align: center;">
+						<img src="images/p4_27.png" width="300px"/>
+						<figcaption>\(s=4\)</figcaption>
+						</td>
+						<td style="text-align: center;">
+						<img src="images/p4_28.png" width="300px"/>
+						<figcaption>\(s=8\)</figcaption>
+						</td>
+					</tr>
+					<tr style="text-align: center;">
+						<td style="text-align: center;">
+						<img src="images/p4_29.png" width="300px"/>
+						<figcaption>\(s=16\)</figcaption>
+						</td>
+						<td style="text-align: center;">
+						<img src="images/p4_30.png" width="300px"/>
+						<figcaption>\(m=64\)</figcaption>
+						</td>
+						<td style="text-align: center;">
+						<img src="images/p4_31.png" width="300px"/>
+						<figcaption>\(m=1024\)</figcaption>
+						</td>
+					</tr>
+				</table>
+				The command used is: <code>./pathtracer -t 8 -s SAMPLING_RATE -l 4 -m 2 -f OUTPUT_FILE -r 480 480 ../dae/sky/dragon.dae</code>.
+			</li>
+
+		</ol>
 
 		<h2>Part 5: Adaptive Sampling</h2>
-		Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum.
+		
+		<ol>
+
+			<li>
+				Adaptive sampling is essentially a technique to allow us to take fewer samples of certain pixels onvariances our screen based on the variance of the samples that we have already taken of that pixel. If we have a high-variance pixel on the screen (i.e. each random sampling of a ray through the pixel and into the scene gives significantly different values for the radiance), then we will have to take a lot of samples, but if we end-up finding that our initial samples are all very close to each other in-value, we can just terminate our sampling of the pixel prematurely (just decide the color of the pixel based on fewer samples). This is based on the statistical principle that if you have \(n\) i.i.d. random variables, and you try and get the average of them, the probability of you being within some \(I\) of the mean is better if you have a low variance for each trial and a larger value of \(n\). So, we exploit this to get a color that is within \(\pm I\) of the true mean \(\mu\) of all rays through that pixel. As for my implementation, I do the following for each batch (which I will call \(B_i\)) of my <code>ns_aa</code> maximum number of samples:
+				<ul>
+
+					<li>To first establish: my batch is at most size <code>samplesPerBatch</code>, but it is clamped by the remaining number of samples I can at most take according to <code>ns_aa</code>. I also maintain a running sum of the luminances (\(s_1\)), the squared luminances (\(s_2\)), and the total number of samples evaluated so far.</li>
+
+					<li>I will take samples of random rays through this pixel just like in part 1 of this homework. I will take the luminances of each sample (using <code>illum</code>) and add the value to \(s_1\) and the squared value to \(s_2\).</li>
+					
+					<li>I increment the number of evaluated samples (\(n\)) by \(|B_i|\).</li>
+
+					<li>I calculate the standard deviation and average of the samples so far as follows:\[\text{MEAN}=\frac{s_1}{n}\]\[\text{STD}=\sqrt{\frac{1}{n-1}\left(s_2-\frac{s_1^2}{n}\right)}\]</li>
+
+					<li>I define \(I=1.96\cdot\frac{\sigma}{\sqrt{n}}\) (which roughly describes how "close" my average is so far to the true mean radiance of the pixel).</li>
+
+					<li>If \(I\leq\text{TOLERANCE}*\text{MEAN}\), then I know that I have reached my desired confidence-level of how close my mean is to the true mean (the desired confidence-level is specified by \(\text{TOLERANCE}\)). If this happens, then I finish sampling and just return the average of my samples so far.</li>
+
+					<li>If we have not reached our desired confidence yet, then we just move-on to the next batch (or take the average if we have already reached our maximum number of samples).</li>
+
+				</ul>
+			</li>
+		
+			<li>
+				Here are renderings of <code>sky/CBspheres_lambertian.dae</code> and <code>keenan/banana.dae</code> with the required number of samples, light rays, and bounce limit (I have disabled Russian Roulette):
+				<table style="width: 100%; text-align: center; border-collapse: collapse;">
+					<tr>
+						<td style="text-align: center;">
+						<img src="images/p5_1.png" width="400px"/>
+						<figcaption><code>sky/CBspheres_lambertian.dae</code> (Rendering)</figcaption>
+						</td>
+						<td style="text-align: center;">
+						<img src="images/p5_2.png" width="400px"/>
+						<figcaption><code>sky/CBspheres_lambertian.dae</code> (Rate)</figcaption>
+						</td>
+					</tr>
+					<tr style="text-align: center;">
+						<td style="text-align: center;">
+						<img src="images/p5_3.png" width="400px"/>
+						<figcaption><code>keenan/banana.dae</code> (Rendering)</figcaption>
+						</td>
+						<td style="text-align: center;">
+						<img src="images/p5_4.png" width="400px"/>
+						<figcaption><code>keenan/banana.dae</code> (Rate)</figcaption>
+						</td>
+					</tr>
+				</table>
+				The command used is: <code>./pathtracer -t 8 -s 2048 -a 64 0.05 -l 1 -m 5 -r 480 360 -f OUTPUT_FILE ../dae/sky/dragon.dae</code>
+			</li>
+
+		</ol>
+
 		</div>
 	</body>
 </html>
