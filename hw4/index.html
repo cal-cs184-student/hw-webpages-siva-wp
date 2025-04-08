@@ -28,20 +28,15 @@
 	<body>
 		<div class="container">
 		<h1>CS184/284A Spring 2025 Homework 4 Write-Up</h1>
-		<div style="text-align: center;">Names: </div>
+		<div style="text-align: center;">Names: Siva Tanikonda</div>
 
 		<br>
 
-		Link to webpage: (TODO) <a href="https://cs184.eecs.berkeley.edu/sp25">cs184.eecs.berkeley.edu/sp25</a>
+		Link to webpage: <a href="https://cal-cs184-student.github.io/hw-webpages-siva-wp/hw4/index.html">cal-cs184-student.github.io/hw-webpages-siva-wp/hw4/index.html</a>
 
 		<br>
 
-		Link to GitHub repository: (TODO) <a href="https://cs184.eecs.berkeley.edu/sp25">cs184.eecs.berkeley.edu/sp25</a>
-
-		<figure>
-			<img src="clothsim.png" alt="Cloth draped over sphere" style="width:70%"/>
-			<figcaption>You can add images with captions!</figcaption>
-		</figure>
+		Link to GitHub repository: <a href="https://github.com/cal-cs184-student/sp25-hw4-siva-cloth">github.com/cal-cs184-student/sp25-hw4-siva-cloth</a>
 
 		<!--
 		We've already added one heading per part, to make your write-up as navigable when grading. Please fit your write-up within these sections!
@@ -51,59 +46,268 @@
 		Give a high-level overview of what you implemented in this homework. Think about what you've built as a whole. Share your thoughts on what interesting things you've learned from completing the homework.
 
 		<h2>Part 1: Masses and springs</h2>
-		Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum.
+		<ol>
 
-		<p>Here is an example 2x2 gridlike structure using an HTML table. Each <b>tr</b> is a row and each <b>td</b> is a column in that row. You might find this useful for framing and showing your result images in an organized fashion.</p>
-		<div style="display: flex; flex-direction: column; align-items: center;">
-			<table style="width: 100%; text-align: center; border-collapse: collapse;">
-			  <tr>
-				<td style="text-align: center;">
-				  <img src="clothsim.png" width="400px"/>
-				  <figcaption>Caption goes here.</figcaption>
-				</td>
-				<td style="text-align: center;">
-				  <img src="clothsim.png" width="400px"/>
-				  <figcaption>Caption goes here.</figcaption>
-				</td>
-			  </tr>
-			  <tr>
-				<td style="text-align: center;">
-				  <img src="clothsim.png" width="400px"/>
-				  <figcaption>Caption goes here.</figcaption>
-				</td>
-				<td style="text-align: center;">
-				  <img src="clothsim.png" width="400px"/>
-				  <figcaption>Caption goes here.</figcaption>
-				</td>
-			  </tr>
-			</table>
-		</div>
+			<li>Here are two images of <code>scene/pinned2.json</code>:
+				<div style="display: flex; flex-direction: column; align-items: center;">
+					<table style="width: 100%; text-align: center; border-collapse: collapse;">
+					  <tr>
+						<td style="text-align: center;">
+						  <img src="images/p1_1.png" width="600px"/>
+						  <figcaption>Side View</figcaption>
+						</td>
+						<td style="text-align: center;">
+						  <img src="images/p1_2.png" width="600px"/>
+						  <figcaption>Top-Down View</figcaption>
+						</td>
+					  </tr>
+					</table>
+				</div>
+			</li>
+
+			<li>Here are some wireframe images (of <code>scene/pinned2.json</code>) with various constraints applied in the GUI:
+				<div style="display: flex; flex-direction: column; align-items: center;">
+					<table style="width: 100%; text-align: center; border-collapse: collapse;">
+					  <tr>
+						<td style="text-align: center;">
+						  <img src="images/p1_3.png" width="600px"/>
+						  <figcaption>No Shearing Constraints</figcaption>
+						</td>
+						<td style="text-align: center;">
+						  <img src="images/p1_4.png" width="600px"/>
+						  <figcaption>Only Shearing Constraints</figcaption>
+						</td>
+						<td style="text-align: center;">
+							<img src="images/p1_5.png" width="600px"/>
+							<figcaption>All Constraints</figcaption>
+						</td>
+					  </tr>
+					</table>
+				</div>
+			</li>
+
+		</ol>
 
 		<h2>Part 2: Simulation via numerical integration</h2>
-		Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum.
+		<ol>
+
+			<li>
+
+				<ul>
+
+					<li>
+						Below are some simulation images with a few different spring constants (on <code>scene/pinned2.json</code>, and all other parameters are the default ones). What we notice is that the higher the spring constant, the less that the cloth folds/drapes (which makes sense, because a higher spring constant means that points are prevented from stretching far away from each other). Additionally, the cloth ends up having more and thinner flaps in the final position with a smaller spring constant, which makes sense because there is a weaker force keeping the point masses on the flaps together, thus reducing the size of each flap.
+						<div style="display: flex; flex-direction: column; align-items: center;">
+							<table style="width: 100%; text-align: center; border-collapse: collapse;">
+							<tr>
+								<td style="text-align: center;">
+								<img src="images/p2_2.png" width="600px"/>
+								<figcaption><code>ks=10</code></figcaption>
+								</td>
+								<td style="text-align: center;">
+								<img src="images/p2_1.png" width="600px"/>
+								<figcaption><code>ks=5000</code> (Default)</figcaption>
+								</td>
+								<td style="text-align: center;">
+									<img src="images/p2_3.png" width="600px"/>
+									<figcaption><code>ks=100000</code></figcaption>
+								</td>
+							</tr>
+							</table>
+						</div>
+					</li>
+
+					<li>
+						Below are some simulation images with a few different densities (on <code>scene/pinned2.json</code>, and all other parameters are the default ones). What we notice is that the lower the density of the mesh, the less that the cloth drapes (which makes sense because a lower density means that the force of gravity has a lower effect on each individual point mass, which prevents the cloth from having a considerable "U"-shape from opposing the spring force). Additionally, the flaps are more pronounced with a higher density, because the springs are more active in preventing the cloth from folding against the force of gravity.
+						<div style="display: flex; flex-direction: column; align-items: center;">
+							<table style="width: 100%; text-align: center; border-collapse: collapse;">
+							<tr>
+								<td style="text-align: center;">
+								<img src="images/p2_4.png" width="600px"/>
+								<figcaption><code>density=1 g/cm^2</code></figcaption>
+								</td>
+								<td style="text-align: center;">
+								<img src="images/p2_1.png" width="600px"/>
+								<figcaption><code>density=15 g/cm^2</code> (Default)</figcaption>
+								</td>
+								<td style="text-align: center;">
+									<img src="images/p2_5.png" width="600px"/>
+									<figcaption><code>density=100 g/cm^2</code></figcaption>
+								</td>
+							</tr>
+							</table>
+						</div>
+					</li>
+
+					<li>
+						Below are some simulation images with a few different damping percentages at approximately the same time of simulation (on <code>scene/pinned2.json</code>, and all other parameters are the default ones). It appears that the resting state doesn't change with different damping values, but the convergence to the steady-state configuration of the mesh is different based on the damping. If the damping value is high, then it takes a very long time for the cloth to drape (since we essentially only have the point mass forces multiplied by the change in time squared to affect the position of each point mass). If the damping value is very low, the cloth falls down extremely quickly and oscillates heavily, because we have no "damping" to reduce the rate of change in the position of each point mass.
+						<div style="display: flex; flex-direction: column; align-items: center;">
+							<table style="width: 100%; text-align: center; border-collapse: collapse;">
+							<tr>
+								<td style="text-align: center;">
+								<img src="images/p2_6.png" width="600px"/>
+								<figcaption><code>damping=0%</code></figcaption>
+								</td>
+								<td style="text-align: center;">
+								<img src="images/p2_1.png" width="600px"/>
+								<figcaption><code>damping=20%</code> (Default)</figcaption>
+								</td>
+								<td style="text-align: center;">
+									<img src="images/p2_7.png" width="600px"/>
+									<figcaption><code>damping=100%</code></figcaption>
+								</td>
+							</tr>
+							</table>
+						</div>
+					</li>
+				
+				</ul>
+
+				<li>Here is a rendering of <code>scene/pinned.json</code> with default simulation parameters:
+					<figure>
+						<img src="images/p2_8.png" style="width:70%"/>
+					</figure>
+				</li>
+
+			</li>
+
+		</ol>
 
 		<h2>Part 3: Handling collisions with other objects</h2>
-		Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum.
+		<ol>
+
+			<li>
+				For spheres, I used the following collision process:
+				<ul>
+
+					<li>First, I check if \(\left\|\vec{p_m}-\vec{p_s}\right\|\leq r_s\) (where \(r_s\) is the radius of the sphere, \(\vec{p_m}\) is the position of the point mass, and \(\vec{p_s}\) is the position of the sphere's origin). If this is true, then we know there is a collision and the current position of the point mass is in the sphere. If not, then we just short-circuit the function and don't do anything else.</li>
+
+					<li>Assuming there is a collision, we calculate the tangent vector \(\vec{t}=\vec{p_s}+r_s\cdot\frac{\vec{p_m}-\vec{p_s}}{\left\|\vec{p_m}-\vec{p_s}\right\|_2}\) (where \(\vec{p_s}\) is the origin of the sphere). We want to ensure that our point mass position never crosses the sphere boundary, so we calculate an adjustment \(\vec{a}=\vec{t}-\vec{l_m}\) (where \(\vec{l_m}\) is the last position of the point mass). We do this to find out where our point mass's position should be at to be above the surface of the sphere, but not clip into the sphere.</li>
+
+					<li>We now set the position \(\vec{p_m}:=\vec{l_m}+(1-f)\vec{a}\) where \(f\) is the friction on the surface of the sphere. The reason for the friction is to allow the cloth to slide around the surface of the sphere if possible (so we don't pin the position of the point mass to the tangent position found on the sphere).</li>
+
+				</ul>
+				For planes, I used the following collision process:
+				<ul>
+
+					<li>First, I check if \(\text{dot}\left(\vec{p_m}-\vec{p},\vec{n}\right)\cdot\text{dot}\left(\vec{l_m}-\vec{p},\vec{n}\right)\geq 0\) (where \(\vec{p}\) is an arbitrary point on the plane and \(\vec{n}\) is the normal vector). If this is true, then it implies that our cloth did not cross the plane during this timestep. Additionally, I checked if \(\text{dot}\left(\vec{p_m}-\vec{p}\right)\geq C\) (where \(C\) is the surface offset constant) to see if the point mass is close enough to the plane right now. If this condition holds, then I know that my plane collision didn't happen. If either of these conditions don't pass, then I will declare the a collision/crossing happened.</li>
+
+					<li>I calculate the tangent point (offsetted by \(C\)) as follows:
+						\[\vec{t}=\vec{p_m}-(a+c)\vec{n}\]
+					where \(a=\text{dot}\left(\vec{p_m}-\vec{p},\vec{n}\right)\) (i.e. the perturbation that \(p_m\) needs to go through to hit the exact tangent point), and \(s\) is \(+C\) if \(a_l>0\) (where \(a_l=\text{dot}\left(\vec{l_m}-\vec{p},\vec{n}\right)\)), and \(-C\) otherwise (to account for which side of the plane that we want the offset to be on).
+					</li>
+
+					<li>We then simply define \(\vec{p_m}:=\vec{l_m}+\left(\vec{t}-\vec{p_m}\right)\left(1-f\right)\) to apply our plane boundary to the point mass.</li>
+
+				</ul>
+			</li>
+
+			<li>Below are the resting positions of the cloth over <code>scene/sphere.json</code> with various spring constant parameters. What we notice is that a smaller spring constant results in more ripples in the cloth and more draping over the sphere (i.e. we can see the sphere shape more clearly at the top of the cloth). This is expected, because a lower spring constant allows for the cloth to drape over the sphere with very little resistance/"force" to keep the cloth "flatter". For a large spring constant, we get that there are fewer ripples in the cloth, and our cloth does not "fold" as much when placed over the sphere. This is also expected becuase a high spring constant "pushes" the cloth to be more flat, regardless of the force from the sphere trying to have the cloth drape around the sphere.
+				<div style="display: flex; flex-direction: column; align-items: center;">
+					<table style="width: 100%; text-align: center; border-collapse: collapse;">
+					<tr>
+						<td style="text-align: center;">
+						<img src="images/p3_1.png" width="600px"/>
+						<figcaption><code>ks=500</code></figcaption>
+						</td>
+						<td style="text-align: center;">
+						<img src="images/p3_2.png" width="600px"/>
+						<figcaption><code>ks=5000</code> (Default)</figcaption>
+						</td>
+						<td style="text-align: center;">
+							<img src="images/p3_3.png" width="600px"/>
+							<figcaption><code>ks=50000</code></figcaption>
+						</td>
+					</tr>
+					</table>
+				</div>
+			</li>
+
+			<li>Below is the cloth resting on <code>scene/plane.json</code> with default simulation parameters.
+				<figure>
+					<img src="images/p3_4.png" style="width:70%"/>
+				</figure>
+			</li>
+
+		</ol>
 
 		<h2>Part 4: Handling self-collisions</h2>
-		Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum.
+		<ol>
+
+			<li>
+			To handle self-collisions, I first had to pick a hash function to map the positions of point masses to float values such that point masses close to each other are in the same hash position. The way I organized this (with suggestions from the spec) is that I split the space of all point masses into boxes in 3D space. Each box has width \(w=3\cdot\frac{W}{n_w}\), height \(h=3\cdot\frac{H}{n_h}\), and \(t=\max(w,h)\) (where \(W\) is the width of our cloth, \(H\) is the height of the cloth \(n_w\) is the number of point masses in each row of the cloth, and \(n_h\) is the number of point masses in each column of the cloth). I define the hash of a point \(\vec{p}\) to be:
+				\[\text{hash}\left(\vec{p}\right)=\left\lfloor\frac{p_x}{w}\right\rfloor+\left\lfloor\frac{p_y}{h}\right\rfloor\cdot n_w+\left\lfloor\frac{p_z}{t}\right\rfloor\cdot n_w\cdot\max(n_w,n_h)\]
+			So, any point in the same box will hash itself to the same position in our <code>map</code> in the <code>Cloth</code> class. This hash function choice is present in <code>hash_position</code> function. Then, in <code>build_spatial_map</code> function, I clear the map of point masses, and then I go through each point mass to create a list of pointers to point masses in each hash position. Then, I actually calculate collisions using the <code>self_collide</code> function, which takes the distance between a point mass \(P\) and all of the other point masses in the same box as point mass \(P\). For every distance \(d_{P,i}\) that is less than twice the thickness of the clock, I add the adjustment vector \(\vec{a}\) that forces \(P\) to be of distance exactly twice the thickness from the other point mass we are looking at. Then, I take the average of the sum of all of these adjustments (and as a small optimization, additionally divide by the number of steps in the simulation for this iteration). I take this average and add it to point mass \(P\). I run this <code>self_collide</code> function for each point mass (thus ensuring that, approximately, no point on the mesh goes within a small enough distance of any other point mass in the mesh).
+			</li>
+
+			<li>
+				Below are images of <code>scene/selfCollision.json</code> at 3 different times of simulation (with all parameters being the default ones).
+				<div style="display: flex; flex-direction: column; align-items: center;">
+					<table style="width: 100%; text-align: center; border-collapse: collapse;">
+					<tr>
+						<td style="text-align: center;">
+						<img src="images/p4_1.png" width="600px"/>
+						<figcaption>Initial Self-Collisions</figcaption>
+						</td>
+						<td style="text-align: center;">
+						<img src="images/p4_2.png" width="600px"/>
+						<figcaption>Cloth All On Floor</figcaption>
+						</td>
+						<td style="text-align: center;">
+							<img src="images/p4_3.png" width="600px"/>
+							<figcaption>Around Steady-State</figcaption>
+						</td>
+					</tr>
+					</table>
+				</div>
+			</li>
+
+			<li>
+				Below are images of <code>scene/selfCollision.json</code> at steady-state with the spring constant varied and all other parameters being the default ones. The lower the spring constant, the more the wrinkles in the cloth and the more folds that happen when the cloth is colliding with itself. This makes sense because with a smaller spring constant, the cloth is more free to bend more finely, leading to the cloth colliding such that it has many small wrinkles. On the contrary, with a high spring constant, the cloth does not fold much, and its folds have a more distinctive curve to them. This is also expected, because a higher spring constant prevents the cloth from bending very sharply/creasing, thus giving fewer, but larger folds/bends in our cloth in steady-state. Additionally, the higher spring constant had less rippling in steady-state compared to a lower spring constant (which is expected because a high spring constant means that the corrections made by the self collisions are less frequent/large relative to the spring forces).
+				<div style="display: flex; flex-direction: column; align-items: center;">
+					<table style="width: 100%; text-align: center; border-collapse: collapse;">
+					<tr>
+						<td style="text-align: center;">
+						<img src="images/p4_4.png" width="600px"/>
+						<figcaption><code>ks=10</code></figcaption>
+						</td>
+						<td style="text-align: center;">
+						<img src="images/p4_5.png" width="600px"/>
+						<figcaption><code>ks=5000</code> (Default)</figcaption>
+						</td>
+						<td style="text-align: center;">
+							<img src="images/p4_6.png" width="600px"/>
+							<figcaption><code>ks=100000</code></figcaption>
+						</td>
+					</tr>
+					</table>
+				</div>
+				Below are images of <code>scene/selfCollision.json</code> at steady-state with the density varied and all other parameters being the default ones. A lower density results in fewer, but larger folds in the cloth in steady-state. This is expected because we have there being less of a gravitational force relative to the spring and self-collision forces. This leads to the cloth trying to stay more "flat", thus leading to fewer, larger folds. On the contrary, the high density leads to more rippling in steady-state and many more smaller folds in the cloth at steady-state. This is also expected, because the spring forces are less significant compared to the gravitational force, and there is more oscillation at steady state (but it is faster for the cloth to get to steady-state).
+				<div style="display: flex; flex-direction: column; align-items: center;">
+					<table style="width: 100%; text-align: center; border-collapse: collapse;">
+					<tr>
+						<td style="text-align: center;">
+						<img src="images/p4_7.png" width="600px"/>
+						<figcaption><code>density=1 g/cm^2</code></figcaption>
+						</td>
+						<td style="text-align: center;">
+						<img src="images/p4_8.png" width="600px"/>
+						<figcaption><code>density=15 g/cm^2</code> (Default)</figcaption>
+						</td>
+						<td style="text-align: center;">
+							<img src="images/p4_9.png" width="600px"/>
+							<figcaption><code>density=100 g/cm^2</code></figcaption>
+						</td>
+					</tr>
+					</table>
+				</div>
+			</li>
+
+		</ol>
 
 		<h2>Part 5: Shaders</h2>
 		Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum.
 
-		<h2>(Optional) Part 6: Extra Credit - Additional cloth simulation features!</h2>
-		Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum.
-		
-		<h2>Additional Notes (please remove)</h2>
-		<ul>
-			<li>You can also add code if you'd like as so: <code>code code code</code></li>
-			<li>If you'd like to add math equations, 
-				<ul>
-					<li>You can write inline equations like so: \( a^2 + b^2 = c^2 \)</li>
-					<li>You can write display equations like so: \[ a^2 + b^2 = c^2 \]</li>
-				</ul>
-			</li>
-		</ul>
 		</div>
 	</body>
 </html>
