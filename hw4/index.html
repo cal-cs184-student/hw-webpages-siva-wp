@@ -70,15 +70,15 @@
 					<table style="width: 100%; text-align: center; border-collapse: collapse;">
 					  <tr>
 						<td style="text-align: center;">
-						  <img src="images/p1_3.png" width="600px"/>
+						  <img src="images/p1_3.png" width="400px"/>
 						  <figcaption>No Shearing Constraints</figcaption>
 						</td>
 						<td style="text-align: center;">
-						  <img src="images/p1_4.png" width="600px"/>
+						  <img src="images/p1_4.png" width="400px"/>
 						  <figcaption>Only Shearing Constraints</figcaption>
 						</td>
 						<td style="text-align: center;">
-							<img src="images/p1_5.png" width="600px"/>
+							<img src="images/p1_5.png" width="400px"/>
 							<figcaption>All Constraints</figcaption>
 						</td>
 					  </tr>
@@ -101,15 +101,15 @@
 							<table style="width: 100%; text-align: center; border-collapse: collapse;">
 							<tr>
 								<td style="text-align: center;">
-								<img src="images/p2_2.png" width="600px"/>
+								<img src="images/p2_2.png" width="400px"/>
 								<figcaption><code>ks=10</code></figcaption>
 								</td>
 								<td style="text-align: center;">
-								<img src="images/p2_1.png" width="600px"/>
+								<img src="images/p2_1.png" width="400px"/>
 								<figcaption><code>ks=5000</code> (Default)</figcaption>
 								</td>
 								<td style="text-align: center;">
-									<img src="images/p2_3.png" width="600px"/>
+									<img src="images/p2_3.png" width="400px"/>
 									<figcaption><code>ks=100000</code></figcaption>
 								</td>
 							</tr>
@@ -123,15 +123,15 @@
 							<table style="width: 100%; text-align: center; border-collapse: collapse;">
 							<tr>
 								<td style="text-align: center;">
-								<img src="images/p2_4.png" width="600px"/>
+								<img src="images/p2_4.png" width="400px"/>
 								<figcaption><code>density=1 g/cm^2</code></figcaption>
 								</td>
 								<td style="text-align: center;">
-								<img src="images/p2_1.png" width="600px"/>
+								<img src="images/p2_1.png" width="400px"/>
 								<figcaption><code>density=15 g/cm^2</code> (Default)</figcaption>
 								</td>
 								<td style="text-align: center;">
-									<img src="images/p2_5.png" width="600px"/>
+									<img src="images/p2_5.png" width="400px"/>
 									<figcaption><code>density=100 g/cm^2</code></figcaption>
 								</td>
 							</tr>
@@ -145,15 +145,15 @@
 							<table style="width: 100%; text-align: center; border-collapse: collapse;">
 							<tr>
 								<td style="text-align: center;">
-								<img src="images/p2_6.png" width="600px"/>
+								<img src="images/p2_6.png" width="400px"/>
 								<figcaption><code>damping=0%</code></figcaption>
 								</td>
 								<td style="text-align: center;">
-								<img src="images/p2_1.png" width="600px"/>
+								<img src="images/p2_1.png" width="400px"/>
 								<figcaption><code>damping=20%</code> (Default)</figcaption>
 								</td>
 								<td style="text-align: center;">
-									<img src="images/p2_7.png" width="600px"/>
+									<img src="images/p2_7.png" width="400px"/>
 									<figcaption><code>damping=100%</code></figcaption>
 								</td>
 							</tr>
@@ -207,15 +207,15 @@
 					<table style="width: 100%; text-align: center; border-collapse: collapse;">
 					<tr>
 						<td style="text-align: center;">
-						<img src="images/p3_1.png" width="600px"/>
+						<img src="images/p3_1.png" width="400px"/>
 						<figcaption><code>ks=500</code></figcaption>
 						</td>
 						<td style="text-align: center;">
-						<img src="images/p3_2.png" width="600px"/>
+						<img src="images/p3_2.png" width="400px"/>
 						<figcaption><code>ks=5000</code> (Default)</figcaption>
 						</td>
 						<td style="text-align: center;">
-							<img src="images/p3_3.png" width="600px"/>
+							<img src="images/p3_3.png" width="400px"/>
 							<figcaption><code>ks=50000</code></figcaption>
 						</td>
 					</tr>
@@ -238,7 +238,7 @@
 			To handle self-collisions, we decide to test each point mass against points only in its close vicinity in order to reduce computation time. This is done by hashing each point mass to a position in a hash table, and we test each point mass to find its collisions with other point masses in the same hash position. I first had to pick a hash function to map the positions of point masses to float values such that point masses close to each other are in the same hash position. The way I organized this is that I split the space of all point masses into boxes in 3D space. Each box has width \(w=3\cdot\frac{W}{n_w}\), height \(h=3\cdot\frac{H}{n_h}\), and \(t=\max(w,h)\) (where \(W\) is the width of our cloth, \(H\) is the height of the cloth \(n_w\) is the number of point masses in each row of the cloth, and \(n_h\) is the number of point masses in each column of the cloth). The number \(3\) is a constant that ends-up being empirically efficient. I define the hash of a point \(\vec{p}\) to be:
 				\[\text{hash}\left(\vec{p}\right)=\left\lfloor\frac{p_x}{w}\right\rfloor+\left\lfloor\frac{p_y}{h}\right\rfloor\cdot n_w+\left\lfloor\frac{p_z}{t}\right\rfloor\cdot n_w\cdot\max(n_w,n_h)\]
 			So, any point in the same box will hash itself to the same position in our <code>map</code> in the <code>Cloth</code> class. This hash function choice is described in the <code>hash_position</code> function. Then, in the <code>build_spatial_map</code> function, I clear the map of point masses, and then for each point mass, I calculate its hash value and I add a pointer to the point mass in the corresponding hash table index (each position uses a <code>vector</code> to maintain the list of pointers). In each iteration of the simulation, I first build the spatial map (using <code>build_spatial_map</code>), and then I apply collisions using the <code>self_collide</code> function on each point mass. The <code>self_collide</code> function first calculates the distance between a point mass \(P\) and all of the other point masses in the same box as point mass \(P\). For every point mass \(P_i\) whose distance from \(P\) (\(d_{i}\)) is less than twice the thickness of the cloth, I add the adjustment vector \(\vec{a_i}\) that forces \(P\) to be of distance exactly twice the thickness from \(P_i\). The adjustment is calculated as follows:
-				\[\vec{a_i}=\frac{\vec{p}_i-\vec{p}}{\left\|\vec{p}-\vec{p_i}\right\|_2}\cdot 2\cdot T-\vec{p}\]
+				\[\vec{a_i}=\frac{\vec{p}-\vec{p_i}}{\left\|\vec{p}-\vec{p_i}\right\|_2}\cdot 2\cdot T-\vec{p}\]
 			where \(\vec{p}_i\) is the position of point mass \(P_i\), \(\vec{p}\) is the position of our point mass \(P\), and \(T\) is the thickness of the mesh. Then, I take the average of the sum of all of these adjustments (and as a small optimization: divide by the number of steps in the simulation for this iteration). I then take this average and add it to the position of point mass \(P\). This process of hashing thus ensures that, approximately, no point on the mesh goes within a small enough distance to any other point mass in the mesh.
 			</li>
 
@@ -248,15 +248,15 @@
 					<table style="width: 100%; text-align: center; border-collapse: collapse;">
 					<tr>
 						<td style="text-align: center;">
-						<img src="images/p4_1.png" width="600px"/>
+						<img src="images/p4_1.png" width="400px"/>
 						<figcaption>Initial Self-Collisions</figcaption>
 						</td>
 						<td style="text-align: center;">
-						<img src="images/p4_2.png" width="600px"/>
+						<img src="images/p4_2.png" width="400px"/>
 						<figcaption>Cloth All On Floor</figcaption>
 						</td>
 						<td style="text-align: center;">
-							<img src="images/p4_3.png" width="600px"/>
+							<img src="images/p4_3.png" width="400px"/>
 							<figcaption>Around Steady-State</figcaption>
 						</td>
 					</tr>
@@ -270,15 +270,15 @@
 					<table style="width: 100%; text-align: center; border-collapse: collapse;">
 					<tr>
 						<td style="text-align: center;">
-						<img src="images/p4_4.png" width="600px"/>
+						<img src="images/p4_4.png" width="400px"/>
 						<figcaption><code>ks=10</code></figcaption>
 						</td>
 						<td style="text-align: center;">
-						<img src="images/p4_5.png" width="600px"/>
+						<img src="images/p4_5.png" width="400px"/>
 						<figcaption><code>ks=5000</code> (Default)</figcaption>
 						</td>
 						<td style="text-align: center;">
-							<img src="images/p4_6.png" width="600px"/>
+							<img src="images/p4_6.png" width="400px"/>
 							<figcaption><code>ks=100000</code></figcaption>
 						</td>
 					</tr>
@@ -289,15 +289,15 @@
 					<table style="width: 100%; text-align: center; border-collapse: collapse;">
 					<tr>
 						<td style="text-align: center;">
-						<img src="images/p4_7.png" width="600px"/>
+						<img src="images/p4_7.png" width="400px"/>
 						<figcaption><code>density=1 g/cm^2</code></figcaption>
 						</td>
 						<td style="text-align: center;">
-						<img src="images/p4_8.png" width="600px"/>
+						<img src="images/p4_8.png" width="400px"/>
 						<figcaption><code>density=15 g/cm^2</code> (Default)</figcaption>
 						</td>
 						<td style="text-align: center;">
-							<img src="images/p4_9.png" width="600px"/>
+							<img src="images/p4_9.png" width="400px"/>
 							<figcaption><code>density=100 g/cm^2</code></figcaption>
 						</td>
 					</tr>
@@ -309,6 +309,118 @@
 
 		<h2>Part 5: Shaders</h2>
 		
+		<ol>
+
+			<li>A shader program is a program that calculates the color/lighting at each part of a 3D geometry (potentially based on a texture or sophisticated calculations) during the process of rendering a scene in computer graphics. Shaders can also perform geometric manipulations such as displacing vertices in a 3D mesh geometry. A vertex shader transforms the position of a 3D-positioned vertex to a 2D position on our 2D screen. The vertex shader also passes-in information such as normals and texture coordinates to the next stage in the rasterization pipeline. A fragment shader is a shader program that takes fragments (ex. the potentially-sampled pixels within a specific triangle in our mesh), and it calculates the colors of each fragment. Each fragment can have certain properties associated with it, including the position of the fragment in 3D space and potentially also coordinates for the fragment within an underlying texture. The vertex shader runs at the start of the rasterization process to transform vertex positions to create texturing on our geometric object or perform important transformations. The fragment shader is invoked during the rasterization stage, where we have to calculate the color of each pixel that we are choosing to sample (this is where we perform lighting calculations as well).</li>
+			
+			<li>The Blinn-Phong model is a simple model to model the combination of three types of lighting:
+				<ul>
+
+					<li><strong>Ambient Lighting</strong>: This is the \(k_aI_a\) term in the Blinn-Phong equation, which represents the "constant" lighting within an environment (i.e. light that is everywhere in the scene without a particular source).</li>
+
+					<li><strong>Diffuse Lighting</strong>: This is the soft light from a particular light source (which is independent from the viewing angle of the camera), and is represented by the \(k_d\left(\frac{I}{r^2}\right)\cdot\max\left(0,\left\langle\vec{n},\vec{l}\right\rangle\right)\) term.</li>
+
+					<li><strong>Specular Lighting</strong>: This is the bright light coming from a specific light source that is dependent on the viewing angle of the camera relative to the light source, and it is represented by the \(k_s\left(\frac{I}{r^2}\right)\cdot\max\left(0,\left\langle\vec{n},\vec{h}\right\rangle\right)^p\) term (where \(\vec{h}=\frac{\vec{v}+\vec{l}}{\left\|\vec{v}+\vec{l}\right\|_2}\)).</li>
+
+				</ul>
+				You directly add-up all three of these terms to get the lighting of an object at position \(\vec{x}\) where \(\vec{v}\) is a vector from \(\vec{x}\) to the camera and \(\vec{l}\) is a vector from \(\vec{x}\) to the light source. Below are some images rendered with Phong shading of <code>scene/sphere.json</code> using my code (where \(k_a=0.1,k_d=0.8,k_l=0.6\)).
+				<div style="display: flex; flex-direction: column; align-items: center;">
+					<table style="width: 100%; text-align: center; border-collapse: collapse;">
+					<tr>
+						<td style="text-align: center;">
+							<img src="images/p5_1.png" width="600px"/>
+							<figcaption>Only Ambient Lighting</figcaption>
+						</td>
+						<td style="text-align: center;">
+							<img src="images/p5_2.png" width="600px"/>
+							<figcaption>Only Diffuse Lighting</figcaption>
+						</td>
+					</tr>
+					<tr>
+						<td style="text-align: center;">
+							<img src="images/p5_3.png" width="600px"/>
+							<figcaption>Only Specular Lighting</figcaption>
+						</td>
+						<td style="text-align: center;">
+							<img src="images/p5_4.png" width="600px"/>
+							<figcaption>Full Phong Shading</figcaption>
+						</td>
+					</tr>
+					</table>
+				</div>
+			</li>
+
+			<li>Below is a rendering of <code>scene/sphere.json</code> using my texture-mapping shader on an image I found online (I replaced <code>textures/texture_1.png</code> with this new texture I found).
+				<figure>
+					<img src="images/p5_5.png" style="width:70%"/>
+				</figure>
+			</li>
+
+			<li>Below are renderings of <code>scene/sphere.json</code> using my bump and displacement mapping shaders on <code>textures/texture_3.png</code> with different mesh coarsenesses (where <code>normal=2</code> and <code>height=1</code> for the bump mapping and <code>normal=100</code> and <code>height=0.02</code> for displacement mapping). Displacement mapping and bump mapping both use the same fragment shader (they apply the color of the fragment's texture coordinate to be the fragment's color). But, Displacement mapping perturbs the position of each vertex in our mesh by adding the vector \(\vec{n}\cdot h\left(\vec{u},\vec{v}\right)\cdot k_h\) to make the shape of our mesh reflect the variable heights of the texture at different positions. So, this leads to our sphere (particularly the one without a cloth over it), having a rougher physical shape, while the bump mapping doesn't change the fundamental geometry of our mesh, and only gives the illusion of height by performing light calculations with a perturbed position (both displacement and bump mapping use the same fragment shader, but displacement mapping alters the position of vertices in the vertex shader). As for what happens when we change the coarseness of our mesh, we end-up not getting much of a difference in the appearance of the bump mapping (with both only the sphere and with the cloth) other than a few more fine specular lighting details on the model. Similarly, there isn't much of a difference with the cloth draped over the ball on displacement mapping. But, the brick-like texture is much clearer defined on the sphere with displacement mapping at a higher mesh granularity. This is expected, because it allows us to look at more parts of the texture at fine detail to ensure sharp edges are more pronounced in our altered mesh from the vertex shader. But, with a very coarse mesh, we end-up not really getting fine detail, as we don't sample enough/have enough vertices to describe the fine detail in the edges between the bricks.
+				<div style="display: flex; flex-direction: column; align-items: center;">
+					<table style="width: 100%; text-align: center; border-collapse: collapse;">
+					<tr>
+						<td style="text-align: center;">
+							<img src="images/p5_10.png" width="600px"/>
+							<figcaption>Bump Mapping (Sphere) (Resolution: \(16\times 16\))</figcaption>
+						</td>
+						<td style="text-align: center;">
+							<img src="images/p5_11.png" width="600px"/>
+							<figcaption>Bump Mapping (Sphere) (Resolution: \(128\times 128\))</figcaption>
+						</td>
+					</tr>
+					<tr>
+						<td style="text-align: center;">
+							<img src="images/p5_6.png" width="600px"/>
+							<figcaption>Bump Mapping (Cloth) (Resolution: \(16\times 16\))</figcaption>
+						</td>
+						<td style="text-align: center;">
+							<img src="images/p5_7.png" width="600px"/>
+							<figcaption>Bump Mapping (Cloth) (Resolution: \(128\times 128\))</figcaption>
+						</td>
+					</tr>
+					<tr>
+						<td style="text-align: center;">
+							<img src="images/p5_12.png" width="600px"/>
+							<figcaption>Displacement Mapping (Sphere) (Resolution: \(16\times 16\))</figcaption>
+						</td>
+						<td style="text-align: center;">
+							<img src="images/p5_13.png" width="600px"/>
+							<figcaption>Displacement Mapping (Sphere) (Resolution: \(128\times 128\))</figcaption>
+						</td>
+					</tr>
+					<tr>
+						<td style="text-align: center;">
+							<img src="images/p5_8.png" width="600px"/>
+							<figcaption>Displacement Mapping (Cloth) (Resolution: \(16\times 16\))</figcaption>
+						</td>
+						<td style="text-align: center;">
+							<img src="images/p5_9.png" width="600px"/>
+							<figcaption>Displacement Mapping (Cloth) (Resolution: \(128\times 128\))</figcaption>
+						</td>
+					</tr>
+					</table>
+				</div>
+			</li>
+
+			<li>Below are renderings of my mirror shading program on <code>scene/sphere.json</code>.
+				<div style="display: flex; flex-direction: column; align-items: center;">
+					<table style="width: 100%; text-align: center; border-collapse: collapse;">
+					<tr>
+						<td style="text-align: center;">
+							<img src="images/p5_14.png" width="600px"/>
+							<figcaption>Sphere Only</figcaption>
+						</td>
+						<td style="text-align: center;">
+							<img src="images/p5_15.png" width="600px"/>
+							<figcaption>Cloth Over Sphere</figcaption>
+						</td>
+					</tr>
+					</table>
+				</div>
+			</li>
+
+		</ol>
 
 		</div>
 	</body>
